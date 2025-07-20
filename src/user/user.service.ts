@@ -36,16 +36,13 @@ export class UserService {
     return await this.prisma.user.findMany();
   }
 
-  async findOne(id: UUID, supabaseUserId: string): Promise<UserResponse> {
+  async findOne(id: UUID): Promise<UserResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    if (user.supabaseUserId !== supabaseUserId || user.role === Role.ORGANIZER) {
-      throw new ForbiddenException("You can only update your own profile");
     }
 
     return user;
@@ -56,10 +53,18 @@ export class UserService {
     updateUserDto: UpdateUserDto,
     supabaseUserId: string
   ): Promise<UserResponse> {
-    const user = await this.findOne(id, supabaseUserId);
+    const user = await this.findOne(id);
 
-    if (user.supabaseUserId !== supabaseUserId || user.role === Role.ORGANIZER) {
-      throw new ForbiddenException("You can only update your own profile");
+    if (user.supabaseUserId !== supabaseUserId) {
+      const requestingUser = await this.prisma.user.findUnique({
+        where: { supabaseUserId },
+      });
+      if (!requestingUser) {
+        throw new NotFoundException("You are not authenticated");
+      }
+      if (requestingUser.role !== Role.ORGANIZER) {
+        throw new ForbiddenException("You can only update your own profile");
+      }
     }
 
     return await this.prisma.user.update({
@@ -71,10 +76,18 @@ export class UserService {
   }
 
   async remove(id: UUID, supabaseUserId: string): Promise<void> {
-    const user = await this.findOne(id, supabaseUserId);
+    const user = await this.findOne(id);
 
-    if (user.supabaseUserId !== supabaseUserId || user.role === Role.ORGANIZER) {
-      throw new ForbiddenException("You can only update your own profile");
+    if (user.supabaseUserId !== supabaseUserId) {
+      const requestingUser = await this.prisma.user.findUnique({
+        where: { supabaseUserId },
+      });
+      if (!requestingUser) {
+        throw new NotFoundException("You are not authenticated");
+      }
+      if (requestingUser.role !== Role.ORGANIZER) {
+        throw new ForbiddenException("You can only update your own profile");
+      }
     }
 
     await this.prisma.user.delete({

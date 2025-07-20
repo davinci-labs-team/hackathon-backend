@@ -30,6 +30,8 @@ export class UserController {
   }
 
   @Get()
+  @UseGuards(SupabaseGuard)
+  @ApiBearerAuth("supabase_token")
   @ApiGetAllUsers()
   findAll() {
     return this.userService.findAll();
@@ -49,10 +51,8 @@ export class UserController {
   @UseGuards(SupabaseGuard)
   @ApiBearerAuth("supabase_token")
   @ApiGetUserById()
-  findOne(@Param("userId") userId: UUID, @Req() req: RequestWithUser) {
-    const supabaseUserId = req.user.sub;
-
-    return this.userService.findOne(userId, supabaseUserId);
+  findOne(@Param("userId") userId: UUID) {
+    return this.userService.findOne(userId);
   }
 
   @Patch(":userId")
