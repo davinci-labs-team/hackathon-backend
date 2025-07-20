@@ -1,4 +1,4 @@
-# Mon Application NestJS
+# Davinci Hackathon
 
 Une application NestJS avec Supabase et Prisma.
 
