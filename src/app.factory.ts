@@ -19,7 +19,7 @@ export async function createApp() {
         bearerFormat: "JWT",
         description: "Entrez le token supabase dans le champ ci-dessus",
       },
-      "supabase_token",
+      "supabase_token"
     )
     .build();
 

@@ -17,3 +17,71 @@ export function ApiCreateUser() {
     })
   );
 }
+
+export function ApiGetAllUsers() {
+  return applyDecorators(
+    ApiOperation({ summary: "Get all users" }),
+    ApiResponse({
+      status: 200,
+      description: "List of all users",
+      type: UserResponse,
+      isArray: true,
+    })
+  );
+}
+
+export function ApiGetUserById() {
+  return applyDecorators(
+    ApiOperation({ summary: "Get a user by ID" }),
+    ApiResponse({
+      status: 200,
+      description: "User found",
+      type: UserResponse,
+    }),
+    ApiResponse({
+      status: 403,
+      description: "You can only access your own user",
+    }),
+    ApiResponse({
+      status: 404,
+      description: "User not found",
+    })
+  );
+}
+
+export function ApiUpdateUser() {
+  return applyDecorators(
+    ApiOperation({ summary: "Update a user by ID" }),
+    ApiResponse({
+      status: 200,
+      description: "User updated successfully",
+      type: UserResponse,
+    }),
+    ApiResponse({
+      status: 403,
+      description: "You can only update your own user",
+    }),
+    ApiResponse({
+      status: 404,
+      description: "User not found",
+    })
+  );
+}
+
+export function ApiDeleteUser() {
+  return applyDecorators(
+    ApiOperation({ summary: "Delete a user by ID" }),
+    ApiResponse({
+      status: 200,
+      description: "User deleted successfully",
+    }),
+    ApiResponse({
+      status: 403,
+      description: "You can only delete your own user",
+    }),
+    ApiResponse({
+      status: 404,
+      description: "User not found",
+    })
+  );
+}

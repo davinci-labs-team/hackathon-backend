@@ -1,98 +1,115 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Mon Application NestJS
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Une application NestJS avec Supabase et Prisma.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Prérequis
 
-## Description
+- Node.js (version 16 ou supérieure)
+- npm ou yarn
+- Compte Supabase
+- Base de données PostgreSQL
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Installation
 
-## Project setup
-
+1. Clonez le repository :
 ```bash
-$ npm install
+git clone <votre-repo>
+cd <nom-du-projet>
 ```
 
-## Compile and run the project
-
+2. Installez les dépendances :
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+## Configuration
 
-```bash
-# unit tests
-$ npm run test
+### Variables d'environnement
 
-# e2e tests
-$ npm run test:e2e
+Créez un fichier `.env` à la racine du projet avec les variables suivantes :
 
-# test coverage
-$ npm run test:cov
+```env
+# Supabase Configuration
+SUPABASE_URL=https://votre-projet.supabase.co
+SUPABASE_KEY=votre_cle_publique_supabase
+SUPABASE_JWT_SECRET=votre_secret_jwt_supabase
+
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/database_name
+
+# Tokens de rafraîchissement
+REFRESH_TOKEN1=votre_refresh_token_1
+REFRESH_TOKEN2=votre_refresh_token_2
 ```
 
-## Deployment
+### Récupération des clés Supabase
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. Connectez-vous à votre [dashboard Supabase](https://supabase.com)
+2. Sélectionnez votre projet
+3. Allez dans **Settings** > **API**
+4. Copiez :
+   - **URL** : `SUPABASE_URL`
+   - **anon public** : `SUPABASE_KEY`
+   - **JWT Secret** : `SUPABASE_JWT_SECRET`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Setup de la base de données
 
+1. Générez le client Prisma :
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx prisma generate
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+2. Appliquez les migrations (si nécessaire) :
+```bash
+npx prisma db push
+```
 
-## Resources
+## Démarrage de l'application
 
-Check out a few resources that may come in handy when working with NestJS:
+### Mode développement
+```bash
+npm run start:dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Mode production
+```bash
+npm run build
+npm run start:prod
+```
+
+## Scripts disponibles
+
+- `npm run start` - Démarre l'application
+- `npm run start:dev` - Démarre en mode développement avec hot reload
+- `npm run start:prod` - Démarre en mode production
+- `npm run build` - Build l'application
+- `npm run test` - Lance les tests
+- `npm run lint` - Vérifie le code avec ESLint
+- `npm run format` - Formate le code avec Prettier
+
+- `./scripts/signup_supabase.sh` - Crée un utilisateur dans l'authentificateur et retourne le token
+- `./scripts/refresh_token_supabase.sh` - Utilise le refresh token pour récupérer un nouveau token
+
+## Structure du projet
+
+```
+src/
+├── modules/          # Modules de l'application
+├── common/           # Utilitaires partagés
+└── main.ts          # Point d'entrée
+
+prisma/
+├── schema.prisma     # Schéma de la base de données
+└── migrations/       # Migrations
+```
+
+## Technologies utilisées
+
+- [NestJS](https://nestjs.com/) - Framework Node.js
+- [Prisma](https://www.prisma.io/) - ORM pour la base de données
+- [Supabase](https://supabase.com/) - Backend-as-a-Service
+- [PostgreSQL](https://www.postgresql.org/) - Base de données
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Pour toute question ou problème, veuillez ouvrir une issue dans le repository.

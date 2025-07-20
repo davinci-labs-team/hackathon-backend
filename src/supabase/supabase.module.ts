@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 
-import { SupabaseStrategy } from './supabase.strategy';
-import { Supabase } from './supabase';
-import { SupabaseGuard } from './supabase.guard';
+import { SupabaseStrategy } from "./supabase.strategy";
+import { Supabase } from "./supabase";
+import { SupabaseGuard } from "./supabase.guard";
 
 @Module({
   imports: [ConfigModule],

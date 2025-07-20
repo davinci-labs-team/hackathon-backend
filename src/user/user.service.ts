@@ -1,57 +1,85 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { ConfigService } from '@nestjs/config';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { PrismaService } from "../prisma/prisma.service";
+import { UUID } from "crypto";
+import { UserResponse } from "./dto/user-response";
+import { Role } from "@prisma/client";
 
 @Injectable()
 export class UserService {
-  private supabase: SupabaseClient;
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase configuration');
+  async create(createUserDto: CreateUserDto, supabaseUserId: string): Promise<UserResponse> {
+    // Check if the user already exists
+    const existUser = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+    if (existUser) {
+      throw new ConflictException("User with this Supabase ID already exists.");
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    return await this.prisma.user.create({
+      data: {
+        supabaseUserId,
+        name: createUserDto.name,
+      },
+    });
   }
 
-  async create(createUserDto: CreateUserDto, supabaseUserId: string) {
-    const { name, email } = createUserDto;
+  async findAll(): Promise<UserResponse[]> {
+    return await this.prisma.user.findMany();
+  }
 
-    const { data, error } = await this.supabase
-      .from('users')
-      .insert([
-        {
-          name,
-          email,
-          supabase_user_id: supabaseUserId,
-        },
-      ]);
+  async findOne(id: UUID, supabaseUserId: string): Promise<UserResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
 
-    if (error) {
-      throw new Error(error.message);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    if (user.supabaseUserId !== supabaseUserId || user.role === Role.ORGANIZER) {
+      throw new ForbiddenException("You can only update your own profile");
     }
 
-    return data;
+    return user;
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async update(
+    id: UUID,
+    updateUserDto: UpdateUserDto,
+    supabaseUserId: string
+  ): Promise<UserResponse> {
+    const user = await this.findOne(id, supabaseUserId);
+
+    if (user.supabaseUserId !== supabaseUserId || user.role === Role.ORGANIZER) {
+      throw new ForbiddenException("You can only update your own profile");
+    }
+
+    return await this.prisma.user.update({
+      where: { id },
+      data: {
+        name: updateUserDto.name,
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+  async remove(id: UUID, supabaseUserId: string): Promise<void> {
+    const user = await this.findOne(id, supabaseUserId);
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+    if (user.supabaseUserId !== supabaseUserId || user.role === Role.ORGANIZER) {
+      throw new ForbiddenException("You can only update your own profile");
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+    await this.prisma.user.delete({
+      where: { id },
+    });
+    return;
   }
 }
