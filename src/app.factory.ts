@@ -21,6 +21,7 @@ export async function createApp() {
       },
       "supabase_token"
     )
+    .addSecurityRequirements("supabase_token")
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

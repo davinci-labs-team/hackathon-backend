@@ -1,8 +1,9 @@
 import { Module } from "@nestjs/common";
 import { UserModule } from "./user/user.module";
-import { SupabaseModule } from "./supabase";
+import { SupabaseGuard, SupabaseModule } from "./supabase";
 import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
+import { APP_GUARD } from "@nestjs/core";
 
 @Module({
   imports: [
@@ -15,6 +16,11 @@ import { PrismaModule } from "./prisma/prisma.module";
     PrismaModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: SupabaseGuard,
+    },
+  ],
 })
 export class AppModule {}

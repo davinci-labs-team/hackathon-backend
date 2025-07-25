@@ -32,6 +32,17 @@ export class UserService {
     });
   }
 
+  async login(supabaseUserId: string): Promise<UserResponse> {
+    // Check if the user exists
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+    if (!user) {
+      throw new NotFoundException("User not found.");
+    }
+    return user;
+  }
+
   async findAll(): Promise<UserResponse[]> {
     return await this.prisma.user.findMany();
   }
