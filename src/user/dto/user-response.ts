@@ -31,7 +31,7 @@ export class UserResponse {
 
   @ApiProperty({
     description: "Role of the user",
-    example: "USER",
+    example: "PARTICIPANT",
     enum: Role,
   })
   role: Role;
