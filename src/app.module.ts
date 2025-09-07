@@ -4,6 +4,7 @@ import { SupabaseGuard, SupabaseModule } from "./supabase";
 import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { APP_GUARD } from "@nestjs/core";
+import { FaqModule } from './faq/faq.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { APP_GUARD } from "@nestjs/core";
     UserModule,
     SupabaseModule,
     PrismaModule,
+    FaqModule,
   ],
   controllers: [],
   providers: [
