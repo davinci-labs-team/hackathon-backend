@@ -143,6 +143,7 @@ export class UserService {
     await this.prisma.user.delete({
       where: { id },
     });
+    await this.supabaseAdmin.auth.admin.deleteUser(user.supabaseUserId);
     return;
   }
 }
