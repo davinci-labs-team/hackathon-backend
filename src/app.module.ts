@@ -5,6 +5,7 @@ import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { APP_GUARD } from "@nestjs/core";
 import { FaqModule } from './faq/faq.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FaqModule } from './faq/faq.module';
     SupabaseModule,
     PrismaModule,
     FaqModule,
+    SettingsModule,
   ],
   controllers: [],
   providers: [
