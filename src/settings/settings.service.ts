@@ -25,17 +25,26 @@ export class SettingsService {
     });
   }
 
-  async update(id: string, updateSettingDto: UpdateSettingDTO, supabaseUserId: string): Promise<SettingResponse> {
+  async update(id: string, dto: UpdateSettingDTO, supabaseUserId: string): Promise<SettingResponse> {
     await this.validateUserRole(supabaseUserId);
-
+  
+    const setting = await this.prisma.setting.findUnique({ where: { id } });
+    if (!setting) throw new NotFoundException(`Setting ${id} not found`);
+    
+    if (!dto.key) {
+        throw new Error('Key is required to update setting value')
+    }
+  
+    const value = (typeof setting.value === 'object' && !Array.isArray(setting.value))
+      ? { ...setting.value, [dto.key]: dto.value }
+      : { [dto.key]: dto.value };
+  
     return this.prisma.setting.update({
       where: { id },
-      data: {
-        ...(updateSettingDto.key && { key: updateSettingDto.key }),
-        ...(updateSettingDto.value && { value: updateSettingDto.value }),
-      },
+      data: { value, updatedAt: new Date() },
     });
   }
+
   
   async findOne(id: string, key?: string): Promise<SettingResponse> {
     const setting = await this.prisma.setting.findUnique({ where: { id } });
