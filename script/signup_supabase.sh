@@ -3,7 +3,7 @@ set -e
 source .env
 
 # Configuration
-EMAIL="testUtilisateurJury@gmail.com"
+EMAIL="testUtilisateurLocalLeo@gmail.com"
 PASSWORD="super-secret-password"
 
 # Sign up the user

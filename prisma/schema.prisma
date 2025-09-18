@@ -28,3 +28,13 @@ model User {
   createdAt DateTime @default(now())
   role Role      @default(USER)
 }
+
+model Announcements {
+  id        String   @id @default(uuid())
+  title     String
+  author    String
+  createdAt DateTime @default(now())
+  tags      String[]
+  description String
+  imageUrl  String[]
+}

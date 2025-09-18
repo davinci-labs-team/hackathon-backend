@@ -3,8 +3,8 @@ import { Public } from "src/common/decorators/public.decorator";
 import axios, { AxiosResponse } from "axios";
 import { FastAPIResponseDto } from "./dto/fastAPI-response.dto";
 
-@Controller("module-externe")
-export class ModuleExterneController {
+@Controller("external-module")
+export class ExternalModuleController {
   @Public()
   @Get("test")
   async getFileUrl(): Promise<string> {

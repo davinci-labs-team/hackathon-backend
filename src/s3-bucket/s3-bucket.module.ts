@@ -5,5 +5,6 @@ import { S3BucketController } from "./s3-bucket.controller";
 @Module({
   controllers: [S3BucketController],
   providers: [S3BucketService],
+  exports: [S3BucketService],
 })
 export class S3BucketModule {}
