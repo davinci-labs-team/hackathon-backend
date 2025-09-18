@@ -27,5 +27,4 @@ export class S3BucketController {
     const path = await this.s3BucketService.uploadFile("annonces", file);
     return { path };
   }
-
 }

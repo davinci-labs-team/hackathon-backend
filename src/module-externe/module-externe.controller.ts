@@ -1,21 +1,24 @@
-import { Controller, Get } from '@nestjs/common';
-import { Public } from 'src/common/decorators/public.decorator';
-import axios from 'axios';
+import { Controller, Get } from "@nestjs/common";
+import { Public } from "src/common/decorators/public.decorator";
+import axios, { AxiosResponse } from "axios";
+import { FastAPIResponseDto } from "./dto/fastAPI-response.dto";
 
-@Controller('module-externe')
+@Controller("module-externe")
 export class ModuleExterneController {
   @Public()
-  @Get('test')
+  @Get("test")
   async getFileUrl(): Promise<string> {
     try {
-      // Appel du service Python FastAPI
-      const response = await axios.get('http://127.0.0.1:8000/example');
-      
-      // Récupère le champ "device_specs" renvoyé par FastAPI
+      // Typage explicite de la réponse Axios
+      const response: AxiosResponse<FastAPIResponseDto> = await axios.get(
+        "http://127.0.0.1:8000/example"
+      );
+
+      // ✅ Maintenant TypeScript sait que device_specs est une string
       return response.data.device_specs;
-    } catch (error) {
-      console.error('Erreur lors de l’appel du service Python:', error.message);
-      throw new Error('Impossible de contacter le service Python');
+    } catch (error: any) {
+      console.error("Erreur lors de l’appel du service Python:", error);
+      throw new Error("Impossible de contacter le service Python");
     }
   }
 }
