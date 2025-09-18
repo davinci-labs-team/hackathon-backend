@@ -19,8 +19,8 @@ export class SettingsController {
         return this.settingsService.update(id, updateSettingDto, supabaseUser.sub);
     }
 
-    @Get(':id')
-    async findOne(@Param('id') id: string, @Query('key') key?: string) {
-        return this.settingsService.findOne(id, key);
+    @Get()
+    async findOne(@Query('key') key?: string) {
+        return this.settingsService.findOne(key);
     }
 }
