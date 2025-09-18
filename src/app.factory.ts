@@ -11,7 +11,6 @@ export async function createApp() {
     .setTitle("Davinci Hackathon API")
     .setDescription("API documentation for the Davinci Hackathon")
     .setVersion("1.0")
-    .addTag("User")
     .addBearerAuth(
       {
         type: "http",
