@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 
-export class CreateSettingDTO {
+export class CreateConfigurationDTO {
   @ApiProperty({
     description: 'Key of the setting (ex: hackathon_config)',
     example: 'hackathon_config',

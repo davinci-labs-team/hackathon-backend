@@ -40,10 +40,20 @@ model Faq {
   createdAt DateTime @default(now())
 }
 
-model Setting {
+model HackathonConfig {
   id        String   @id @default(uuid())
   key       String   @unique
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Announcement {
+  id        String  @id @default(uuid())
+  title     String?
+  author    String
+  tags      Json?
+  images    Json?
+  content   String?
+  createdAt DateTime @default(now())
 }
