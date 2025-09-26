@@ -16,10 +16,22 @@ export class UserResponse {
   supabaseUserId: string;
 
   @ApiProperty({
-    description: "Name of the user",
-    example: "John Doe",
+    description: "Firstname of the user",
+    example: "John",
   })
-  name: string;
+  firstname: string;
+
+  @ApiProperty({
+    description: "Lastname of the user",
+    example: "Doe",
+  })
+  lastname: string;
+
+  @ApiProperty({
+    description: "Email of the user",
+    example: "john.doe@example.com",
+  })
+  email: string;
 
   @ApiProperty({
     description: "Date when the user was created",
@@ -31,8 +43,14 @@ export class UserResponse {
 
   @ApiProperty({
     description: "Role of the user",
-    example: "USER",
+    example: "PARTICIPANT",
     enum: Role,
   })
   role: Role;
+
+  @ApiProperty({
+    description: "School of the user",
+    example: "Harvard University",
+  })
+  school: string | null;
 }
