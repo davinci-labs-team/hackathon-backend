@@ -1,5 +1,5 @@
 import { Controller, Get } from "@nestjs/common";
-import { Public } from "src/common/decorators/public.decorator";
+import { Public } from "../common/decorators/public.decorator";
 import axios, { AxiosResponse } from "axios";
 import { FastAPIResponseDto } from "./dto/fastAPI-response.dto";
 

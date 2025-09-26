@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { S3BucketService } from "./s3-bucket.service";
-import { Public } from "src/common/decorators/public.decorator";
+import { Public } from "../common/decorators/public.decorator";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBody, ApiConsumes } from "@nestjs/swagger";
 import { FileResponseDto } from "./dto/file-response.dto";

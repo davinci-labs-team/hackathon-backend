@@ -12,11 +12,11 @@ import {
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { ApiTags, ApiConsumes, ApiBody } from "@nestjs/swagger";
 import { AnnouncementService } from "./announcement.service";
-import { SupabaseDecodedUser } from "src/common/decorators/supabase-decoded-user.types";
-import { SupabaseUser } from "src/common/decorators/supabase-user.decorator";
+import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
+import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { Announcements, Role } from "@prisma/client";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { PatchAnnouncementDto } from "./dto/patch-announcement.dto";
 
 @ApiTags("announcements")
