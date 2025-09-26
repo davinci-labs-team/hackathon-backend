@@ -24,13 +24,13 @@ export class AnnouncementService {
       );
     }
 
-    const announcement = await this.prisma.announcements.create({
+    const announcement = await this.prisma.announcement.create({
       data: {
         title: createAnnouncementDto.title,
-        author: user.name,
+        author: user.firstname + " " + user.lastname,
         tags: createAnnouncementDto.tags,
-        description: createAnnouncementDto.description,
-        imageUrl: imageUrls,
+        content: createAnnouncementDto.content,
+        images: imageUrls,
       },
     });
 
@@ -38,25 +38,25 @@ export class AnnouncementService {
   }
 
   async getAll() {
-    return this.prisma.announcements.findMany({
+    return this.prisma.announcement.findMany({
       orderBy: { createdAt: "desc" },
     });
   }
 
   async getById(id: string) {
-    return this.prisma.announcements.findUnique({
+    return this.prisma.announcement.findUnique({
       where: { id },
     });
   }
 
   async delete(id: string) {
-    await this.prisma.announcements.delete({
+    await this.prisma.announcement.delete({
       where: { id },
     });
   }
 
   async update(id: string, updateAnnouncementDto: Partial<PatchAnnouncementDto>, user: User) {
-    const existingAnnouncement = await this.prisma.announcements.findUnique({
+    const existingAnnouncement = await this.prisma.announcement.findUnique({
       where: { id },
     });
 
@@ -65,7 +65,7 @@ export class AnnouncementService {
     }
 
     // Add new images to s3 bucket and get the URLs
-    let imageUrls: string[] = existingAnnouncement.imageUrl || [];
+    let imageUrls: string[] = (existingAnnouncement.images as string[]) || [];
     if (updateAnnouncementDto.files && updateAnnouncementDto.files.length !== 0) {
       const newImageUrls = await Promise.all(
         updateAnnouncementDto.files.map(async file => {
@@ -76,14 +76,14 @@ export class AnnouncementService {
       imageUrls = imageUrls.concat(newImageUrls);
     }
 
-    const updatedAnnouncement = await this.prisma.announcements.update({
+    const updatedAnnouncement = await this.prisma.announcement.update({
       where: { id },
       data: {
         title: updateAnnouncementDto.title || existingAnnouncement.title,
-        author: user.name,
-        description: updateAnnouncementDto.description || existingAnnouncement.description,
-        tags: updateAnnouncementDto.tags || existingAnnouncement.tags,
-        imageUrl: imageUrls,
+        author: user.firstname + " " + user.lastname,
+        tags: updateAnnouncementDto.tags || existingAnnouncement.tags || undefined,
+        images: imageUrls,
+        content: updateAnnouncementDto.content || existingAnnouncement.content,
       },
     });
 

@@ -1,15 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateConfigurationDTO {
   @ApiProperty({
-    description: 'Key of the setting (ex: hackathon_config)',
-    example: 'hackathon_config',
+    description: "Key of the setting (ex: hackathon_config)",
+    example: "hackathon_config",
   })
-  key: string
+  key: string;
 
   @ApiProperty({
-    description: 'JSON object to store',
+    description: "JSON object to store",
     type: Object,
   })
-  value: Record<string, any>
+  value: Record<string, any>;
 }

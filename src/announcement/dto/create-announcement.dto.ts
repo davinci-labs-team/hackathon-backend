@@ -27,7 +27,7 @@ export class CreateAnnouncementDto {
   })
   @IsString()
   @IsNotEmpty()
-  description: string;
+  content: string;
 
   @ApiProperty({
     type: "array",

@@ -21,6 +21,10 @@ export class S3BucketService {
   async uploadFile(bucket: string, file: Express.Multer.File): Promise<string> {
     if (!file) throw new BadRequestException("No file uploaded");
 
+    if (file.size > 50 * 1024 * 1024) {
+      throw new BadRequestException("File too large (max 50MB)");
+    }
+
     const filePath = `${Date.now()}-${file.originalname}`;
 
     const { error } = await this.supabase.storage.from(bucket).upload(filePath, file.buffer, {

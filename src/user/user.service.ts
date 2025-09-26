@@ -14,16 +14,14 @@ import { createClient } from "@supabase/supabase-js";
 
 @Injectable()
 export class UserService {
-
   private supabaseAdmin = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY! // ⚠️ côté serveur uniquement
   );
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto, supabaseUserId: string): Promise<UserResponse> {
-
     const requestingUser = await this.prisma.user.findUnique({
       where: { supabaseUserId },
     });
@@ -47,8 +45,8 @@ export class UserService {
 
     return await this.prisma.user.create({
       data: {
-        supabaseUserId: authUser.user?.id!,
-        ...createUserDto
+        supabaseUserId: authUser.user?.id,
+        ...createUserDto,
       },
     });
   }
@@ -107,10 +105,13 @@ export class UserService {
         throw new ConflictException("Email already in use");
       }
 
-      const { error: authError } = await this.supabaseAdmin.auth.admin.updateUserById(user.supabaseUserId, {
-        email: updateUserDto.email,
-        email_confirm: true,
-      });
+      const { error: authError } = await this.supabaseAdmin.auth.admin.updateUserById(
+        user.supabaseUserId,
+        {
+          email: updateUserDto.email,
+          email_confirm: true,
+        }
+      );
 
       if (authError) {
         throw new ConflictException(`Supabase Auth Error: ${authError.message}`);
@@ -120,7 +121,7 @@ export class UserService {
     return await this.prisma.user.update({
       where: { id },
       data: {
-        ...updateUserDto
+        ...updateUserDto,
       },
     });
   }

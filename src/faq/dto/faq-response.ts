@@ -16,7 +16,8 @@ export class FaqResponse {
 
   @ApiProperty({
     description: "The answer to the question",
-    example: "To reset your password, click on 'Forgot Password' at the login screen and follow the instructions.",
+    example:
+      "To reset your password, click on 'Forgot Password' at the login screen and follow the instructions.",
   })
   answer: string;
 
@@ -34,4 +35,4 @@ export class FaqResponse {
     format: "date-time",
   })
   createdAt: Date;
-}   
+}

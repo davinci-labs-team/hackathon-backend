@@ -15,7 +15,7 @@ import { AnnouncementService } from "./announcement.service";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
-import { Announcements, Role } from "@prisma/client";
+import { Announcement, Role } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { PatchAnnouncementDto } from "./dto/patch-announcement.dto";
 
@@ -58,12 +58,12 @@ export class AnnouncementController {
   }
 
   @Get()
-  async getAll(): Promise<Announcements[]> {
+  async getAll(): Promise<Announcement[]> {
     return this.announcementService.getAll();
   }
 
   @Get(":id")
-  async getById(@Param("id") id: string): Promise<Announcements | null> {
+  async getById(@Param("id") id: string): Promise<Announcement | null> {
     return this.announcementService.getById(id);
   }
 

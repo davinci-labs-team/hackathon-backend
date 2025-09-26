@@ -4,6 +4,7 @@ import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
+import { Role } from "@prisma/client";
 
 describe("UserController", () => {
   let controller: UserController;
@@ -27,11 +28,15 @@ describe("UserController", () => {
   };
 
   const mockCreateUserDto: CreateUserDto = {
-    name: "John Doe",
+    firstname: "John",
+    lastname: "Doe",
+    email: "john.doe@example.com",
+    role: Role.PARTICIPANT,
+    school: "Harvard University",
   };
 
   const mockUpdateUserDto: UpdateUserDto = {
-    name: "Jane Doe",
+    firstname: "Jane",
   };
 
   const mockUserId = "cc31ac03-58ef-4821-a445-61f289882e36";
