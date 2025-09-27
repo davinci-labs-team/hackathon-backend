@@ -30,6 +30,12 @@ model User {
   createdAt      DateTime @default(now())
   role           Role     @default(PARTICIPANT)
   school         String?
+  bio            String?
+  interests      String[]
+  linkedin       String?
+  github         String?
+  discord        String?
+  profilePictureUrl String?
 }
 
 model Faq {

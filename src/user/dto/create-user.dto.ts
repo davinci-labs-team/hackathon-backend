@@ -33,4 +33,46 @@ export class CreateUserDto {
     required: false,
   })
   school: string | null;
+  @ApiProperty({
+    description: "Short biography of the user",
+    example: "Passionate software engineer with 5 years of experience.",
+    nullable: true,
+  })
+  bio?: string | null;
+
+  @ApiProperty({
+    description: "List of user interests",
+    example: ["Python", "Design", "Gaming"],
+    type: [String],
+    nullable: true,
+  })
+  interests?: string[];
+
+  @ApiProperty({
+    description: "LinkedIn profile URL or username",
+    example: "https://www.linkedin.com/in/johndoe",
+    nullable: true,
+  })
+  linkedin?: string | null;
+
+  @ApiProperty({
+    description: "GitHub profile URL or username",
+    example: "https://github.com/johndoe",
+    nullable: true,
+  })
+  github?: string | null;
+
+  @ApiProperty({
+    description: "Discord identifier",
+    example: "johndoe#1234",
+    nullable: true,
+  })
+  discord?: string | null;
+
+  @ApiProperty({
+    description: "Profile picture URL",
+    example: "https://example.com/profile-pic.jpg",
+    nullable: true,
+  })
+  profilePictureUrl?: string | null;
 }
