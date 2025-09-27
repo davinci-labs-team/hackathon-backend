@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsString, ArrayNotEmpty } from "class-validator";
+import { IsArray, IsNotEmpty, IsString, ArrayNotEmpty, IsBoolean } from "class-validator";
 
 export class CreateAnnouncementDto {
   @ApiProperty({
@@ -30,13 +30,17 @@ export class CreateAnnouncementDto {
   content: string;
 
   @ApiProperty({
-    type: "array",
-    items: {
-      type: "string",
-      format: "binary",
-    },
+    type: [String],
     description: "Optional file attachments",
+    example: ["file1.png", "document.pdf"],
     required: false,
   })
-  files?: Express.Multer.File[];
+  files?: string[];
+
+  @ApiProperty({
+    description: "Indicates if the announcement is private",
+    example: false,
+  })
+  @IsBoolean()
+  isPrivate: boolean;
 }
