@@ -50,10 +50,11 @@ model HackathonConfig {
 
 model Announcement {
   id        String  @id @default(uuid())
-  title     String?
+  title     String
   author    String
   tags      Json?
   images    Json?
-  content   String?
+  content   String
+  isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
 }
