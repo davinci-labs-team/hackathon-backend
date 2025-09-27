@@ -9,7 +9,8 @@ export class CreateFaqDto {
 
   @ApiProperty({
     description: "Answer of the FAQ",
-    example: "NestJS is a progressive Node.js framework for building efficient and scalable server-side applications.",
+    example:
+      "NestJS is a progressive Node.js framework for building efficient and scalable server-side applications.",
   })
   answer: string;
 

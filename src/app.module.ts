@@ -4,8 +4,11 @@ import { SupabaseGuard, SupabaseModule } from "./supabase";
 import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { APP_GUARD } from "@nestjs/core";
-import { FaqModule } from './faq/faq.module';
-import { ConfigurationModule } from './configuration/configuration.module';
+import { S3BucketModule } from "./s3-bucket/s3-bucket.module";
+import { ExternalModuleController } from "./external-module/external-module.controller";
+import { AnnouncementModule } from "./announcement/announcement.module";
+import { FaqModule } from "./faq/faq.module";
+import { ConfigurationModule } from "./configuration/configuration.module";
 
 @Module({
   imports: [
@@ -16,10 +19,12 @@ import { ConfigurationModule } from './configuration/configuration.module';
     UserModule,
     SupabaseModule,
     PrismaModule,
+    S3BucketModule,
+    AnnouncementModule,
     FaqModule,
     ConfigurationModule,
   ],
-  controllers: [],
+  controllers: [ExternalModuleController],
   providers: [
     {
       provide: APP_GUARD,
