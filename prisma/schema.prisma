@@ -55,5 +55,6 @@ model Announcement {
   tags      Json?
   images    Json?
   content   String
+  isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
 }
