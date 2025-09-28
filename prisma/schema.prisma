@@ -59,7 +59,7 @@ model Announcement {
   title     String
   author    String
   tags      Json?
-  images    Json?
+  files    Json?
   content   String
   isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
