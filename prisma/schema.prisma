@@ -59,8 +59,21 @@ model Announcement {
   title     String
   author    String
   tags      Json?
-  files    Json?
+  files     Json?
   content   String
   isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id                 Int      @id @default(autoincrement())
+  emitter_platform_id String
+  status             Status   @default(OPEN)
+  channel_id         String
+  user_discord_id    String
+}
+
+enum Status {
+  OPEN
+  CLOSE
 }
