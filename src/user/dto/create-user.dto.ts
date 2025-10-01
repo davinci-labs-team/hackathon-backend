@@ -74,5 +74,5 @@ export class CreateUserDto {
     example: "https://example.com/profile-pic.jpg",
     nullable: true,
   })
-  profilePictureUrl?: string | null;
+  profilePicturePath?: string | null;
 }

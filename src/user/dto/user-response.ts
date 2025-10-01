@@ -91,9 +91,9 @@ export class UserResponse {
   discord?: string | null;
 
   @ApiProperty({
-    description: "Profile picture URL",
-    example: "https://example.com/profile-pic.jpg",
+    description: "Profile picture Path",
+    example: "photo.jpg, picture.png",
     nullable: true,
   })
-  profilePicture?: string | null;
+  profilePicturePath?: string | null;
 }

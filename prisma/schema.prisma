@@ -35,7 +35,7 @@ model User {
   linkedin       String?
   github         String?
   discord        String?
-  profilePictureUrl String?
+  profilePicturePath String?
 }
 
 model Faq {
