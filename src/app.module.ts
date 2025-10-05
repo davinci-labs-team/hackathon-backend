@@ -9,6 +9,7 @@ import { ExternalModuleController } from "./external-module/external-module.cont
 import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ConfigurationModule } from "./configuration/configuration.module";
     AnnouncementModule,
     FaqModule,
     ConfigurationModule,
+    AuthModule,
   ],
   controllers: [ExternalModuleController],
   providers: [

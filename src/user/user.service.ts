@@ -97,7 +97,7 @@ export class UserService {
       }
     }
 
-    if (updateUserDto.email !== user.email) {
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
       const requestingUser = await this.prisma.user.findUnique({
         where: { email: updateUserDto.email },
       });
