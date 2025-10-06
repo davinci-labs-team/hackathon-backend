@@ -34,8 +34,6 @@ export class AuthService {
   }
 
   async updateUserWithDiscord(userId: string, supabaseUserId: string, discordUser: DiscordUser) {
-    console.log('Updating user:', userId, supabaseUserId, discordUser);
-
     const userId_uuid = userId as UUID;
 
     const updatedUser = {
