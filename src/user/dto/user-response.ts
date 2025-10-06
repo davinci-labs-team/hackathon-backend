@@ -96,4 +96,10 @@ export class UserResponse {
     nullable: true,
   })
   profilePicturePath?: string | null;
+
+  @ApiProperty({
+    description: "Indicates if the invitation email has been sent",
+    example: false,
+  })
+  invitationSent: boolean;
 }
