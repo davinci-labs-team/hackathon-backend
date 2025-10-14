@@ -33,8 +33,8 @@ model User {
   bio            String?
   interests      String[]
   linkedin       String?
-  github         String?
-  discord        String?
+  github         Json?
+  discord        Json?
   profilePicturePath String?
   invitationSent Boolean  @default(false)
 }

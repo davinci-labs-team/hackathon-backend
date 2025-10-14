@@ -9,7 +9,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { UUID } from "crypto";
 import { UserResponse } from "./dto/user-response";
-import { Role } from "@prisma/client";
+import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 
 @Injectable()
@@ -47,6 +47,8 @@ export class UserService {
       data: {
         supabaseUserId: authUser.user?.id,
         ...createUserDto,
+        github: createUserDto.github ?? undefined,
+        discord: createUserDto.discord ?? undefined
       },
     });
   }
@@ -122,6 +124,8 @@ export class UserService {
       where: { id },
       data: {
         ...updateUserDto,
+        github: updateUserDto.github ?? undefined,
+        discord: updateUserDto.discord ?? undefined,
       },
     });
   }

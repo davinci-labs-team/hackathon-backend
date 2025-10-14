@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { UUID } from 'crypto';
 import { DiscordUser } from 'passport-discord-auth';
+import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
@@ -36,9 +37,12 @@ export class AuthService {
   async updateUserWithDiscord(userId: string, supabaseUserId: string, discordUser: DiscordUser) {
     const userId_uuid = userId as UUID;
 
-    const updatedUser = {
-        discord: discordUser.id
-    }
+    const updatedUser : UpdateUserDto = {
+      discord: {
+        id: discordUser.id,
+        username: discordUser.username,
+      },
+    };
     
     await this.userService.update(userId_uuid, updatedUser, supabaseUserId);
   }

@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
+import { JsonType } from "src/configuration/dto/configuration-response";
 
 export class CreateUserDto {
   @ApiProperty({
@@ -56,19 +57,19 @@ export class CreateUserDto {
   linkedin?: string | null;
 
   @ApiProperty({
-    description: "GitHub profile URL or username",
-    example: "https://github.com/johndoe",
+    description: "GitHub social account",
+    example: { id: "123456", username: "johndoe" },
     nullable: true,
   })
-  github?: string | null;
+  github?: JsonType | null;
 
   @ApiProperty({
-    description: "Discord identifier",
-    example: "johndoe#1234",
+    description: "Discord social account",
+    example: { id: "123456", username: "johndoe#1234" },
     nullable: true,
   })
-  discord?: string | null;
-
+  discord?: JsonType | null;
+  
   @ApiProperty({
     description: "Profile picture URL",
     example: "https://example.com/profile-pic.jpg",
