@@ -10,12 +10,14 @@ export class AuthService {
 
   constructor(private readonly userService: UserService) {}
 
+  // Discord OAuth2
+
   async getDiscordUser(code: string) {
     const tokenRes = await axios.post(
       'https://discord.com/api/oauth2/token',
       new URLSearchParams({
-        client_id: process.env.OAUTH_DISCORD_CLIENT_ID!,
-        client_secret: process.env.OAUTH_DISCORD_CLIENT_SECRET!,
+        client_id: process.env.OAUTH2_DISCORD_CLIENT_ID!,
+        client_secret: process.env.OAUTH2_DISCORD_CLIENT_SECRET!,
         grant_type: 'authorization_code',
         code,
         redirect_uri: process.env.DISCORD_REDIRECT_URI!,
@@ -45,5 +47,39 @@ export class AuthService {
     };
     
     await this.userService.update(userId_uuid, updatedUser, supabaseUserId);
+  }
+
+  // GitHub OAuth2
+  
+  async getGithubUser(code: string) {
+    const tokenRes = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.OAUTH2_GITHUB_CLIENT_ID!,
+        client_secret: process.env.OAUTH2_GITHUB_CLIENT_SECRET!,
+        code,
+        redirect_uri: process.env.GITHUB_REDIRECT_URI!,
+      },
+      {
+        headers: { Accept: 'application/json' },
+      },
+    );
+
+    const { access_token } = tokenRes.data;
+
+    const userRes = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    return userRes.data;
+  }
+
+  async updateUserWithGithub(userId: string, supabaseUserId: string, githubUser: any) {
+    await this.userService.update(userId as any, {
+      github: {
+        id: githubUser.id.toString(),
+        username: githubUser.login,
+      },
+    }, supabaseUserId);
   }
 }

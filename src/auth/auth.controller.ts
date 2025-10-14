@@ -20,9 +20,6 @@ export class AuthController {
 
     try {
       const decoded = JSON.parse(decodeURIComponent(state));
-
-      console.log('Decoded state:', decoded);
-
       const discordUser = await this.authService.getDiscordUser(code);
 
       await this.authService.updateUserWithDiscord(
@@ -38,7 +35,41 @@ export class AuthController {
       return res.redirect(redirectUrl);
     } catch (err) {
       console.error(err);
-      return res.status(400).send('OAuth2 flow failed');
+      return res.status(400).send('OAuth2 Discord flow failed');
+    }
+  }
+
+  @Get('github/callback')
+  @Public()
+  async githubCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Res() res: Response,
+  ) {
+    if (!code || !state) {
+      return res.status(400).send('Missing code or state');
+    }
+
+    try {
+      const decoded = JSON.parse(decodeURIComponent(state));
+      const githubUser = await this.authService.getGithubUser(code);
+
+      await this.authService.updateUserWithGithub(
+        decoded.userId,
+        decoded.supabaseUserId,
+        githubUser,
+      );
+
+      const redirectUrl = decoded.organizerPlatform
+        ? 'http://localhost:5173/organizer/profile'
+        : 'http://localhost:5173/user/profile';
+
+      return res.redirect(redirectUrl);
+    } catch (err) {
+      console.error(err);
+      return res.status(400).send('OAuth2 Github flow failed');
     }
   }
 }
+
+
