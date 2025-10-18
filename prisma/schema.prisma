@@ -97,6 +97,7 @@ model Team {
   name        String
   description String?
   
+  themeId     String
   subjectId   String
   status      TeamStatus @default(UNLOCKED)
   createdAt   DateTime   @default(now())
