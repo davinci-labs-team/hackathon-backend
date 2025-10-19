@@ -100,6 +100,7 @@ model Team {
   themeId     String
   subjectId   String
   status      TeamStatus @default(UNLOCKED)
+  ignoreConstraints Boolean   @default(false)
   createdAt   DateTime   @default(now())
 
   // 1:N
