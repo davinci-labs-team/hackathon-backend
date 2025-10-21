@@ -140,7 +140,7 @@ export class TeamService {
         });
         return { id: team.id };
     }
-    
+
     // Utils
 
     private async validateUserRole(supabaseUserId: string, role: Role) {
