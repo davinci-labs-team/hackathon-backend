@@ -103,6 +103,46 @@ export class TeamService {
         return teams as TeamResponse[];
     }
 
+
+    async assignUserToTeam(teamId: string, userId: string, supabaseUserId: string) {
+        await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
+
+        const team = await this.prisma.team.update({
+            where: { id: teamId },
+            data: {
+                members: {
+                    connect: { id: userId }
+                }
+            }
+        });
+        return { id: team.id };
+    }
+
+    async withdrawUserFromTeam(teamId: string, userId: string, supabaseUserId: string) {
+        await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
+
+        const team = await this.prisma.team.update({
+            where: { id: teamId },
+            data: {
+                members: {
+                    disconnect: { id: userId }
+                }
+            }
+        });
+        return { id: team.id };
+    }
+
+    async remove(id: string, supabaseUserId: string) {
+        await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
+
+        const team = await this.prisma.team.delete({
+            where: { id }
+        });
+        return { id: team.id };
+    }
+    
+    // Utils
+
     private async validateUserRole(supabaseUserId: string, role: Role) {
         const existUser = await this.prisma.user.findUnique({
           where: { supabaseUserId },

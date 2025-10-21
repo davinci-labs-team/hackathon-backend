@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
 import { TeamService } from './team.service';
 import { CreateTeamDTO } from './dto/create-team.dto';
 import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
@@ -44,14 +44,23 @@ export class TeamController {
         return this.teamService.updateIgnoreConstraints(id, ignoreConstraints, supabaseUser.sub);
     }
 
-    /*@Patch(':teamId/assign-user/:userId')
+    @Patch(':teamId/assign-user/:userId')
     async assignUserToTeam(
         @Param('teamId') teamId: string,
         @Param('userId') userId: string,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
         return this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub);
-    }*/
+    }
+
+    @Patch(':teamId/withdraw-user/:userId')
+    async withdrawUserFromTeam(
+        @Param('teamId') teamId: string,
+        @Param('userId') userId: string,
+        @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    ) {
+        return this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub);
+    }
 
     @Get(':id')
     async findOne(@Param('id') id: string) {
@@ -67,6 +76,11 @@ export class TeamController {
         return this.teamService.findAll();
     }
 
-
-
+    @Delete(':id')
+    async remove(
+        @Param('id') id: string,
+        @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    ) {
+        return this.teamService.remove(id, supabaseUser.sub);
+    }
 }
