@@ -1,7 +1,7 @@
 export class Settings {
   id: string;
   key: string;
-  value: string;
+  value: any;
   createdAt: Date;
   updatedAt: Date;
 }

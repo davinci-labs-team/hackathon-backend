@@ -1,29 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
+import { Controller, Get, Post, Body, Put, Patch, Param, Delete, HttpException, HttpStatus } from "@nestjs/common";
 import { TeamService } from './team.service';
 import { CreateTeamDTO } from './dto/create-team.dto';
 import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 import { TeamStatus } from "@prisma/client";
+import { UpdateTeamDTO } from "./dto/update-team.dto";
 
 @Controller('team')
 export class TeamController {
     constructor(private readonly teamService: TeamService) {}
+
+    private async handleRequest(fn: () => Promise<any>) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            console.error(error);
+            throw new HttpException(error?.message || 'Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @Post()
     async create(
         @Body() newTeamData: CreateTeamDTO,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.create(newTeamData, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.create(newTeamData, supabaseUser.sub));
     }
 
-    @Patch(':id')
+    @Put(':id')
     async update(
         @Param('id') id: string,
-        @Body() updateTeamData: Partial<CreateTeamDTO>,
+        @Body() updateTeamData: UpdateTeamDTO,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.update(id, updateTeamData, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.update(id, updateTeamData, supabaseUser.sub));
     }
 
     @Patch(':id/status')
@@ -32,7 +45,7 @@ export class TeamController {
         @Body('status') status: TeamStatus,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.updateStatus(id, status, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.updateStatus(id, status, supabaseUser.sub));
     }
 
     @Patch(':id/ignore-constraints')
@@ -41,7 +54,7 @@ export class TeamController {
         @Body('ignoreConstraints') ignoreConstraints: boolean,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.updateIgnoreConstraints(id, ignoreConstraints, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.updateIgnoreConstraints(id, ignoreConstraints, supabaseUser.sub));
     }
 
     @Patch(':teamId/assign-user/:userId')
@@ -50,7 +63,7 @@ export class TeamController {
         @Param('userId') userId: string,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub));
     }
 
     @Patch(':teamId/withdraw-user/:userId')
@@ -59,21 +72,17 @@ export class TeamController {
         @Param('userId') userId: string,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub));
     }
 
     @Get(':id')
     async findOne(@Param('id') id: string) {
-        try {
-            return this.teamService.findOne(id);
-        } catch (error) {
-            throw error;
-        }
+        return this.handleRequest(() => this.teamService.findOne(id));
     }
 
     @Get()
     async findAll() {
-        return this.teamService.findAll();
+        return this.handleRequest(() => this.teamService.findAll());
     }
 
     @Delete(':id')
@@ -81,6 +90,6 @@ export class TeamController {
         @Param('id') id: string,
         @SupabaseUser() supabaseUser: SupabaseDecodedUser
     ) {
-        return this.teamService.remove(id, supabaseUser.sub);
+        return this.handleRequest(() => this.teamService.remove(id, supabaseUser.sub));
     }
 }
