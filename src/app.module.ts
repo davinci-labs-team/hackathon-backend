@@ -10,6 +10,8 @@ import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
 import { AuthModule } from './auth/auth.module';
+import { DepositController } from './deposit/deposit.controller';
+import { DepositModule } from './deposit/deposit.module';
 
 @Module({
   imports: [
@@ -25,8 +27,9 @@ import { AuthModule } from './auth/auth.module';
     FaqModule,
     ConfigurationModule,
     AuthModule,
+    DepositModule,
   ],
-  controllers: [ExternalModuleController],
+  controllers: [ExternalModuleController, DepositController],
   providers: [
     {
       provide: APP_GUARD,

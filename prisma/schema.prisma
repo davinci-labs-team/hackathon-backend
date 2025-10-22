@@ -78,3 +78,24 @@ enum Status {
   OPEN
   CLOSE
 }
+
+model Deposit {
+  id              Int       @id @default(autoincrement())
+  teamId          String
+  files           String[]
+  depositStatus   DepositStatus
+  evaluationStatus String
+  dueDate         DateTime
+  comments        String?
+  submittedAt     DateTime
+
+  feedback        String?
+  grade           Int?
+  reviewedAt      DateTime?
+}
+
+enum DepositStatus {
+  SUBMITTED
+  PENDING
+  EVALUATED
+}
