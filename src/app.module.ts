@@ -29,7 +29,7 @@ import { DepositModule } from './deposit/deposit.module';
     AuthModule,
     DepositModule,
   ],
-  controllers: [ExternalModuleController, DepositController],
+  controllers: [ExternalModuleController],
   providers: [
     {
       provide: APP_GUARD,

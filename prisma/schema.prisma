@@ -80,14 +80,14 @@ enum Status {
 }
 
 model Deposit {
-  id              Int       @id @default(autoincrement())
-  teamId          String
+  id              String       @id @default(uuid())
+  teamId          String       @unique
   files           String[]
   depositStatus   DepositStatus
-  evaluationStatus String
+  evaluationStatus DepositStatus
   dueDate         DateTime
   comments        String?
-  submittedAt     DateTime
+  submittedAt     DateTime?
 
   feedback        String?
   grade           Int?
@@ -98,4 +98,5 @@ enum DepositStatus {
   SUBMITTED
   PENDING
   EVALUATED
+  NOT_EVALUATED
 }
