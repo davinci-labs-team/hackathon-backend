@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
+import { JsonType } from "src/configuration/dto/configuration-response";
 
 export class UserResponse {
   @ApiProperty({
@@ -81,14 +82,14 @@ export class UserResponse {
     example: "https://github.com/johndoe",
     nullable: true,
   })
-  github?: string | null;
+  github?: JsonType | null;
 
   @ApiProperty({
     description: "Discord identifier",
     example: "johndoe#1234",
     nullable: true,
   })
-  discord?: string | null;
+  discord?: JsonType | null;
 
   @ApiProperty({
     description: "Profile picture Path",

@@ -9,8 +9,9 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { UUID } from "crypto";
 import { UserResponse } from "./dto/user-response";
-import { Role } from "@prisma/client";
+import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
+import { UserResponseReduced } from "./dto/user-response-reduced";
 
 @Injectable()
 export class UserService {
@@ -47,6 +48,8 @@ export class UserService {
       data: {
         supabaseUserId: authUser.user?.id,
         ...createUserDto,
+        github: createUserDto.github ?? undefined,
+        discord: createUserDto.discord ?? undefined
       },
     });
   }
@@ -64,6 +67,21 @@ export class UserService {
 
   async findAll(): Promise<UserResponse[]> {
     return await this.prisma.user.findMany();
+  }
+
+  async findAllReduced(): Promise<UserResponseReduced[]> {
+    return await this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstname: true,
+        lastname: true,
+        school: true,
+        role: true,
+        teamId: true,
+        favoriteSubjectId: true,
+      },
+    });
   }
 
   async findOne(id: UUID): Promise<UserResponse> {
@@ -122,6 +140,8 @@ export class UserService {
       where: { id },
       data: {
         ...updateUserDto,
+        github: updateUserDto.github ?? undefined,
+        discord: updateUserDto.discord ?? undefined,
       },
     });
   }

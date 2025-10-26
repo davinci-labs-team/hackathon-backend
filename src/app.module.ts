@@ -10,8 +10,8 @@ import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
 import { AuthModule } from './auth/auth.module';
-import { DepositController } from './deposit/deposit.controller';
 import { DepositModule } from './deposit/deposit.module';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -28,6 +28,7 @@ import { DepositModule } from './deposit/deposit.module';
     ConfigurationModule,
     AuthModule,
     DepositModule,
+    TeamModule,
   ],
   controllers: [ExternalModuleController],
   providers: [
