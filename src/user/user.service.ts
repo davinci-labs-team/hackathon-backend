@@ -11,6 +11,7 @@ import { UUID } from "crypto";
 import { UserResponse } from "./dto/user-response";
 import { Prisma, PrismaClient, Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
+import { UserResponseReduced } from "./dto/user-response-reduced";
 
 @Injectable()
 export class UserService {
@@ -66,6 +67,21 @@ export class UserService {
 
   async findAll(): Promise<UserResponse[]> {
     return await this.prisma.user.findMany();
+  }
+
+  async findAllReduced(): Promise<UserResponseReduced[]> {
+    return await this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstname: true,
+        lastname: true,
+        school: true,
+        role: true,
+        teamId: true,
+        favoriteSubjectId: true,
+      },
+    });
   }
 
   async findOne(id: UUID): Promise<UserResponse> {

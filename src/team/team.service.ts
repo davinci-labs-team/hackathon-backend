@@ -4,7 +4,7 @@ import { Role, TeamStatus, User } from '@prisma/client';
 import { CreateTeamDTO } from './dto/create-team.dto';
 import { UpdateTeamDTO } from './dto/update-team.dto';
 import { TeamResponse } from './dto/team-response';
-import { Theme, Subject } from 'src/configuration/entities/theme-subject.entity';
+import { Theme } from 'src/configuration/entities/theme-subject.entity';
 
 @Injectable()
 export class TeamService {
