@@ -31,7 +31,6 @@ export class UserController {
   }
 
   @Get("reduced")
-  @Public()
   findAllReduced() {
     return this.userService.findAllReduced();
   }
