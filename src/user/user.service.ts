@@ -80,6 +80,7 @@ export class UserService {
         role: true,
         teamId: true,
         favoriteSubjectId: true,
+        team: { select: { name: true } },
       },
     });
   }
