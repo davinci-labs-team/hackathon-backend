@@ -71,7 +71,7 @@ export class AuthService {
       headers: { Authorization: `Bearer ${access_token}` },
     });
 
-    return userRes.data;
+    return { ...userRes.data, access_token };
   }
 
   async updateUserWithGithub(userId: string, supabaseUserId: string, githubUser: any) {
@@ -79,6 +79,7 @@ export class AuthService {
       github: {
         id: githubUser.id.toString(),
         username: githubUser.login,
+        accessToken: githubUser.access_token,
       },
     }, supabaseUserId);
   }

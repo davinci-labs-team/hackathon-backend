@@ -12,6 +12,7 @@ import { ConfigurationModule } from "./configuration/configuration.module";
 import { AuthModule } from './auth/auth.module';
 import { DepositModule } from './deposit/deposit.module';
 import { TeamModule } from './team/team.module';
+import { GithubModule } from './github/github.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TeamModule } from './team/team.module';
     AuthModule,
     DepositModule,
     TeamModule,
+    GithubModule,
   ],
   controllers: [ExternalModuleController],
   providers: [
