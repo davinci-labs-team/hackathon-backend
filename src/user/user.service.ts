@@ -80,6 +80,9 @@ export class UserService {
         role: true,
         teamId: true,
         favoriteSubjectId: true,
+        team: { select: { id: true, name: true } },
+        juryTeams: { select: { id: true, name: true } },
+        mentorTeams: { select: { id: true, name: true } },
       },
     });
   }

@@ -57,7 +57,7 @@ export class TeamController {
         return this.handleRequest(() => this.teamService.updateIgnoreConstraints(id, ignoreConstraints, supabaseUser.sub));
     }
 
-    @Post(':teamId/assign-user/:userId')
+    @Post(':teamId/users/:userId')
     async assignUserToTeam(
         @Param('teamId') teamId: string,
         @Param('userId') userId: string,
@@ -66,7 +66,7 @@ export class TeamController {
         return this.handleRequest(() => this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub));
     }
 
-    @Delete(':teamId/withdraw-user/:userId')
+    @Delete(':teamId/users/:userId')
     async withdrawUserFromTeam(
         @Param('teamId') teamId: string,
         @Param('userId') userId: string,
