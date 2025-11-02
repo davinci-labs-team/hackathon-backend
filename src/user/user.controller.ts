@@ -3,9 +3,9 @@ import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UUID } from "crypto";
-import { SupabaseUser } from "src/common/decorators/supabase-user.decorator";
-import { Public } from "src/common/decorators/public.decorator";
-import { SupabaseDecodedUser } from "src/common/decorators/supabase-decoded-user.types";
+import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
+import { Public } from "../common/decorators/public.decorator";
+import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 
 @Controller("user")
 export class UserController {
@@ -28,6 +28,11 @@ export class UserController {
   @Public()
   findAll() {
     return this.userService.findAll();
+  }
+
+  @Get("reduced")
+  findAllReduced() {
+    return this.userService.findAllReduced();
   }
 
   @Get("/protected")

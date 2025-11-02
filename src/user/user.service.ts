@@ -10,24 +10,46 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UUID } from "crypto";
 import { UserResponse } from "./dto/user-response";
 import { Role } from "@prisma/client";
+import { createClient } from "@supabase/supabase-js";
+import { UserResponseReduced } from "./dto/user-response-reduced";
 
 @Injectable()
 export class UserService {
+  private supabaseAdmin = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY! // ⚠️ côté serveur uniquement
+  );
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto, supabaseUserId: string): Promise<UserResponse> {
-    // Check if the user already exists
-    const existUser = await this.prisma.user.findUnique({
+    const requestingUser = await this.prisma.user.findUnique({
       where: { supabaseUserId },
     });
-    if (existUser) {
-      throw new ConflictException("User with this Supabase ID already exists.");
+    if (!requestingUser) {
+      throw new NotFoundException("You are not authenticated");
+    }
+    if (requestingUser.role !== Role.ORGANIZER) {
+      throw new ForbiddenException("You are not authorized to create users");
+    }
+
+    // Create user in supabase auth first
+    const { data: authUser, error: authError } = await this.supabaseAdmin.auth.admin.createUser({
+      email: createUserDto.email,
+      email_confirm: true,
+      password: Math.random().toString(36).slice(-8), // Generate a random password
+    });
+
+    if (authError) {
+      throw new ConflictException(`Supabase Auth Error: ${authError.message}`);
     }
 
     return await this.prisma.user.create({
       data: {
-        supabaseUserId,
-        name: createUserDto.name,
+        supabaseUserId: authUser.user?.id,
+        ...createUserDto,
+        github: createUserDto.github ?? undefined,
+        discord: createUserDto.discord ?? undefined,
       },
     });
   }
@@ -45,6 +67,24 @@ export class UserService {
 
   async findAll(): Promise<UserResponse[]> {
     return await this.prisma.user.findMany();
+  }
+
+  async findAllReduced(): Promise<UserResponseReduced[]> {
+    return await this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstname: true,
+        lastname: true,
+        school: true,
+        role: true,
+        teamId: true,
+        favoriteSubjectId: true,
+        team: { select: { id: true, name: true } },
+        juryTeams: { select: { id: true, name: true } },
+        mentorTeams: { select: { id: true, name: true } },
+      },
+    });
   }
 
   async findOne(id: UUID): Promise<UserResponse> {
@@ -78,10 +118,33 @@ export class UserService {
       }
     }
 
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
+      const requestingUser = await this.prisma.user.findUnique({
+        where: { email: updateUserDto.email },
+      });
+      if (requestingUser) {
+        throw new ConflictException("Email already in use");
+      }
+
+      const { error: authError } = await this.supabaseAdmin.auth.admin.updateUserById(
+        user.supabaseUserId,
+        {
+          email: updateUserDto.email,
+          email_confirm: true,
+        }
+      );
+
+      if (authError) {
+        throw new ConflictException(`Supabase Auth Error: ${authError.message}`);
+      }
+    }
+
     return await this.prisma.user.update({
       where: { id },
       data: {
-        name: updateUserDto.name,
+        ...updateUserDto,
+        github: updateUserDto.github ?? undefined,
+        discord: updateUserDto.discord ?? undefined,
       },
     });
   }
@@ -104,6 +167,7 @@ export class UserService {
     await this.prisma.user.delete({
       where: { id },
     });
+    await this.supabaseAdmin.auth.admin.deleteUser(user.supabaseUserId);
     return;
   }
 }

@@ -15,16 +15,101 @@ datasource db {
 }
 
 enum Role {
-  USER
+  PARTICIPANT
   JURY
   MENTOR
   ORGANIZER
 }
 
 model User {
-  id    String    @id @default(uuid())
-  supabaseUserId String @unique
-  name  String
+  id             String   @id @default(uuid())
+  supabaseUserId String   @unique
+  firstname      String
+  lastname       String
+  email          String   @unique
+  createdAt      DateTime @default(now())
+  role           Role     @default(PARTICIPANT)
+  school         String?
+  bio            String?
+  interests      String[]
+  linkedin       String?
+  github         Json?
+  discord        Json?
+  profilePicturePath String?
+  invitationSent Boolean  @default(false)
+  favoriteSubjectId String?
+
+  // 1:N
+  teamId   String? 
+  team     Team?   @relation("TeamMembers", fields: [teamId], references: [id])
+
+  juryTeams   Team[]  @relation("TeamJuries")
+
+  mentorTeams Team[]  @relation("TeamMentors")
+}
+
+model Faq {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
-  role Role      @default(USER)
+}
+
+model HackathonConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Announcement {
+  id        String  @id @default(uuid())
+  title     String
+  author    String
+  tags      Json?
+  files     Json?
+  content   String
+  isPrivate Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id                 Int      @id @default(autoincrement())
+  emitter_platform_id String
+  status             Status   @default(OPEN)
+  channel_id         String
+  user_discord_id    String
+}
+
+enum Status {
+  OPEN
+  CLOSE
+}
+
+enum TeamStatus {
+  LOCKED
+  UNLOCKED
+}
+
+model Team {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  
+  themeId     String
+  subjectId   String
+  status      TeamStatus @default(UNLOCKED)
+  ignoreConstraints Boolean   @default(false)
+  createdAt   DateTime   @default(now())
+
+  // 1:N
+  members     User[]     @relation("TeamMembers")
+
+  // N:N
+  juries      User[]     @relation("TeamJuries")
+
+  // N:N
+  mentors     User[]     @relation("TeamMentors")
 }

@@ -1,0 +1,46 @@
+name: Test and Lint Pipeline
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Audit des dépendances
+      run: npm audit --audit-level=moderate
+
+    - name: Install Semgrep
+      run: python3 -m pip install semgrep
+
+    - name: Run Semgrep security scan
+      run: semgrep scan --config=auto .
+    
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run Prettier
+      run: npm run format
+
+    - run: npm run test:cov
+    - name: Upload coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
+      
