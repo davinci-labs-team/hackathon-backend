@@ -10,6 +10,7 @@ import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
 import { AuthModule } from './auth/auth.module';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthModule } from './auth/auth.module';
     FaqModule,
     ConfigurationModule,
     AuthModule,
+    TeamModule,
   ],
   controllers: [ExternalModuleController],
   providers: [

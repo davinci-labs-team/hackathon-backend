@@ -33,10 +33,19 @@ model User {
   bio            String?
   interests      String[]
   linkedin       String?
-  github         String?
-  discord        String?
+  github         Json?
+  discord        Json?
   profilePicturePath String?
   invitationSent Boolean  @default(false)
+  favoriteSubjectId String?
+
+  // 1:N
+  teamId   String? 
+  team     Team?   @relation("TeamMembers", fields: [teamId], references: [id])
+
+  juryTeams   Team[]  @relation("TeamJuries")
+
+  mentorTeams Team[]  @relation("TeamMentors")
 }
 
 model Faq {
@@ -77,4 +86,30 @@ model Ticket {
 enum Status {
   OPEN
   CLOSE
+}
+
+enum TeamStatus {
+  LOCKED
+  UNLOCKED
+}
+
+model Team {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  
+  themeId     String
+  subjectId   String
+  status      TeamStatus @default(UNLOCKED)
+  ignoreConstraints Boolean   @default(false)
+  createdAt   DateTime   @default(now())
+
+  // 1:N
+  members     User[]     @relation("TeamMembers")
+
+  // N:N
+  juries      User[]     @relation("TeamJuries")
+
+  // N:N
+  mentors     User[]     @relation("TeamMentors")
 }

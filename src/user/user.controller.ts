@@ -30,6 +30,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Get("reduced")
+  findAllReduced() {
+    return this.userService.findAllReduced();
+  }
+
   @Get("/protected")
   protected(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return supabaseUser;
