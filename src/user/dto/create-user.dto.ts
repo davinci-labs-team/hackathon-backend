@@ -69,7 +69,7 @@ export class CreateUserDto {
     nullable: true,
   })
   discord?: JsonType | null;
-  
+
   @ApiProperty({
     description: "Profile picture URL",
     example: "https://example.com/profile-pic.jpg",

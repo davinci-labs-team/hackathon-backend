@@ -9,8 +9,8 @@ import { ExternalModuleController } from "./external-module/external-module.cont
 import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
-import { AuthModule } from './auth/auth.module';
-import { TeamModule } from './team/team.module';
+import { AuthModule } from "./auth/auth.module";
+import { TeamModule } from "./team/team.module";
 
 @Module({
   imports: [
