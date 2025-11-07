@@ -1,10 +1,23 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { Role, TeamStatus, User } from '@prisma/client';
-import { CreateTeamDTO } from './dto/create-team.dto';
-import { UpdateTeamDTO } from './dto/update-team.dto';
-import { TeamResponse } from './dto/team-response';
-import { Theme } from 'src/configuration/entities/theme-subject.entity';
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { PrismaService } from "src/prisma/prisma.service";
+import { Role, TeamStatus, User } from "@prisma/client";
+import { CreateTeamDTO } from "./dto/create-team.dto";
+import { UpdateTeamDTO } from "./dto/update-team.dto";
+import { TeamResponse } from "./dto/team-response";
+import { Theme } from "src/configuration/entities/theme-subject.entity";
+
+interface RawSubject {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface RawTheme {
+  id: string;
+  name: string;
+  description: string;
+  subjects: RawSubject[];
+}
 
 @Injectable()
 export class TeamService {
@@ -138,7 +151,9 @@ export class TeamService {
 
     const user = await this.validateUserExists(userId);
     if (user.teamId) {
-      throw new ForbiddenException(`User with id '${userId}' is already a member of team with id '${user.teamId}'.`);
+      throw new ForbiddenException(
+        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`
+      );
     }
 
     let proprety = "members";
@@ -161,18 +176,18 @@ export class TeamService {
 
   async withdrawUserFromTeam(teamId: string, userId: string, supabaseUserId: string) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
-  
+
     const user = await this.validateUserExists(userId);
-  
+
     return this.disconnectUserFromTeam(teamId, user);
   }
-  
+
   /**
    * Fonction chapeau : gère le retrait d’un user d’une team selon son rôle
    */
   private async disconnectUserFromTeam(teamId: string, user: User) {
     let relationKey: "members" | "juries" | "mentors";
-  
+
     switch (user.role) {
       case Role.PARTICIPANT:
         if (user.teamId !== teamId) {
@@ -182,29 +197,26 @@ export class TeamService {
         }
         relationKey = "members";
         break;
-  
+
       case Role.JURY:
         relationKey = "juries";
         break;
-  
+
       case Role.MENTOR:
         relationKey = "mentors";
         break;
-  
+
       default:
-        throw new ForbiddenException(
-          `Cannot withdraw user with role '${user.role}' from a team.`
-        );
+        throw new ForbiddenException(`Cannot withdraw user with role '${user.role}' from a team.`);
     }
-  
+
     const team = await this.prisma.team.update({
       where: { id: teamId },
       data: { [relationKey]: { disconnect: { id: user.id } } },
     });
-  
+
     return { id: team.id };
   }
-  
 
   async remove(id: string, supabaseUserId: string) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
@@ -216,9 +228,11 @@ export class TeamService {
   // ------------------ Utils ------------------
 
   private async validateUserRole(supabaseUserId: string, role: Role) {
-    const user = await this.prisma.user.findUnique({ where: { supabaseUserId } });
-    if (!user) throw new NotFoundException('User not found.');
-    if (user.role !== role) throw new ForbiddenException('Only organizer can perform this action.');
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+    if (!user) throw new NotFoundException("User not found.");
+    if (user.role !== role) throw new ForbiddenException("Only organizer can perform this action.");
     return user;
   }
 
@@ -239,7 +253,7 @@ export class TeamService {
     const foundIds = users.map(u => u.id);
     const missingIds = userIds.filter(id => !foundIds.includes(id));
     if (missingIds.length) {
-      throw new NotFoundException(`Users not found: ${missingIds.join(', ')}`);
+      throw new NotFoundException(`Users not found: ${missingIds.join(", ")}`);
     }
   }
 
@@ -255,31 +269,80 @@ export class TeamService {
   }
 
   // TODO: Refacto to secure theme and subject validation when creating/updating a team
+  // Add these interfaces at the top of your file (or in a separate types file)
+
+  // Replace the parseThemes method with this type-safe version:
   private parseThemes(value: unknown): Theme[] {
     if (!Array.isArray(value)) return [];
-    return value.map(t => ({
-      id: (t as any).id,
-      name: (t as any).name,
-      description: (t as any).description,
-      subjects: Array.isArray((t as any).subjects)
-        ? (t as any).subjects.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            description: s.description,
-          }))
-        : [],
-    }));
+
+    return value.map((t: unknown) => {
+      // Type guard to ensure t is an object with the expected properties
+      if (!this.isRawTheme(t)) {
+        throw new Error("Invalid theme structure");
+      }
+
+      return {
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        subjects: Array.isArray(t.subjects)
+          ? t.subjects.map((s: unknown) => {
+              if (!this.isRawSubject(s)) {
+                throw new Error("Invalid subject structure");
+              }
+              return {
+                id: s.id,
+                name: s.name,
+                description: s.description,
+              };
+            })
+          : [],
+      };
+    });
+  }
+
+  // Add these type guard methods
+  private isRawTheme(value: unknown): value is RawTheme {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "id" in value &&
+      typeof value.id === "string" &&
+      "name" in value &&
+      typeof value.name === "string" &&
+      "description" in value &&
+      typeof value.description === "string" &&
+      "subjects" in value
+    );
+  }
+
+  private isRawSubject(value: unknown): value is RawSubject {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "id" in value &&
+      typeof value.id === "string" &&
+      "name" in value &&
+      typeof value.name === "string" &&
+      "description" in value &&
+      typeof value.description === "string"
+    );
   }
 
   private async validateThemeAndSubject(themeId: string, subjectId: string) {
-    const config = await this.prisma.hackathonConfig.findUnique({ where: { key: 'THEMES' } });
-    if (!config) throw new NotFoundException('No themes configuration found.');
-    
+    const config = await this.prisma.hackathonConfig.findUnique({
+      where: { key: "THEMES" },
+    });
+    if (!config) throw new NotFoundException("No themes configuration found.");
+
     const themes = this.parseThemes(config.value);
     const theme = themes.find(t => t.id === themeId);
     if (!theme) throw new NotFoundException(`Theme with id '${themeId}' not found.`);
 
     const subject = theme.subjects.find(s => s.id === subjectId);
-    if (!subject) throw new NotFoundException(`Subject with id '${subjectId}' not found in theme '${themeId}'.`);
+    if (!subject)
+      throw new NotFoundException(
+        `Subject with id '${subjectId}' not found in theme '${themeId}'.`
+      );
   }
 }

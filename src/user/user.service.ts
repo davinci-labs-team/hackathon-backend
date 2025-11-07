@@ -9,7 +9,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { UUID } from "crypto";
 import { UserResponse } from "./dto/user-response";
-import { Prisma, PrismaClient, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import { UserResponseReduced } from "./dto/user-response-reduced";
 
@@ -49,7 +49,7 @@ export class UserService {
         supabaseUserId: authUser.user?.id,
         ...createUserDto,
         github: createUserDto.github ?? undefined,
-        discord: createUserDto.discord ?? undefined
+        discord: createUserDto.discord ?? undefined,
       },
     });
   }

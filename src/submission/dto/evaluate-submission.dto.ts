@@ -22,7 +22,7 @@ export class EvaluateSubmissionDto {
   @IsOptional()
   comment: string | null;
 
-  @ApiProperty({ example: 'team-123-documents.pdf' })
+  @ApiProperty({ example: "team-123-documents.pdf" })
   @IsString()
   evaluationFilePath?: string | null;
 }

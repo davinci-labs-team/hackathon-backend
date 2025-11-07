@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { SubmissionStatus } from "@prisma/client";
-import { IsEnum, IsString, IsUUID } from "class-validator";
+import { IsString, IsUUID } from "class-validator";
 
 export class UpdateSubmissionDto {
   @ApiProperty({
@@ -10,7 +9,7 @@ export class UpdateSubmissionDto {
   @IsUUID()
   teamId: string;
 
-  @ApiProperty({ example: 'team-123-documents.pdf' })
+  @ApiProperty({ example: "team-123-documents.pdf" })
   @IsString()
   submissionFilePath?: string | null;
 }
