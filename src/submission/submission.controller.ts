@@ -18,8 +18,13 @@ export class SubmissionController {
     }
 
     @Get()
-    async findAll(@Query() submission: CreateSubmissionDto): Promise<submissionReponseDto[]> {
+    async find(@Query() submission: CreateSubmissionDto): Promise<submissionReponseDto[]> {
         return this.submissionService.getsubmissions(submission.teamId);
+    }
+
+    @Get("due-date")
+    async getDueDate(): Promise<Date> {
+        return this.submissionService.getDueDate();
     }
 
     @Put()

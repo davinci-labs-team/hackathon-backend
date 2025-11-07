@@ -25,6 +25,35 @@ export class SubmissionService {
         });
     }
 
+    async getDueDate() {
+        const hackathonConfig = await this.prisma.hackathonConfig.findFirst(
+            { where: { key: "phases" } }
+        );
+        if (!hackathonConfig) {
+            throw new Error("Hackathon configuration not found");
+        }
+
+        const rawValue = hackathonConfig.value;
+
+        let phases: any[];
+
+        if (typeof rawValue === "string") {
+            phases = JSON.parse(rawValue);
+        } else if (Array.isArray(rawValue)) {
+            phases = rawValue;
+        } else {
+            throw new Error("Invalid format for hackathonConfig.value");
+        }
+        const phase3 = phases.find((phase) => phase.order === 3);
+
+        if (!phase3?.endDate) {
+            throw new Error("Phase 3 endDate not found");
+        }
+
+        const dueDate = new Date(phase3.endDate);
+        return dueDate;
+    }
+
     async updatesubmission(submission: UpdateSubmissionDto) {
         return this.prisma.submission.update({
             where: { teamId: submission.teamId },
