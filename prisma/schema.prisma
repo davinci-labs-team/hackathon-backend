@@ -114,24 +114,47 @@ model Team {
   mentors     User[]     @relation("TeamMentors")
 }
 
-model Deposit {
-  id              String       @id @default(uuid())
-  teamId          String       @unique
-  files           String[]
-  depositStatus   DepositStatus
-  evaluationStatus DepositStatus
-  dueDate         DateTime
-  comments        String?
-  submittedAt     DateTime?
+model Submission {
+  id          String              @id @default(uuid())
+  teamId      String              @unique
+  grade       Float?              // moyenne des notes des juries
+  status      SubmissionStatus    @default(NOT_SUBMITTED)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  submissionFilePath String?      // File path du documents de soumission (.zip)
 
-  feedback        String?
-  grade           Int?
-  reviewedAt      DateTime?
+  // Relations
+  evaluations Evaluation[]        // évaluations des jurys
+  comments    Comment[]           // commentaires des mentors
 }
 
-enum DepositStatus {
-  SUBMITTED
+model Evaluation {
+  id            String      @id @default(uuid())
+  submissionId  String
+  juryId        String
+  grade         Float       // note donnée par un jury
+  comment       String?     // commentaire optionnel du jury
+  createdAt     DateTime    @default(now())
+
+  evaluationFilePath String? 
+
+  submission    Submission  @relation(fields: [submissionId], references: [id])
+
+  @@unique([submissionId, juryId])
+}
+
+model Comment {
+  id            String      @id @default(uuid())
+  submissionId  String
+  mentorId      String
+  content       String
+  createdAt     DateTime    @default(now())
+
+  submission    Submission  @relation(fields: [submissionId], references: [id])
+}
+
+enum SubmissionStatus {
+  GRADED
   PENDING
-  EVALUATED
-  NOT_EVALUATED
+  NOT_SUBMITTED
 }
