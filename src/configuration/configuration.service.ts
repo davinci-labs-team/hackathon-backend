@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UpdateConfigurationDTO } from "./dto/update-configuration.dto";
 import { CreateConfigurationDTO } from "./dto/create-configuration.dto";
 import { ConfigurationResponse } from "./dto/configuration-response";
-import { Role } from "@prisma/client";
+import { Role, HackathonConfigKey } from "@prisma/client";
 
 @Injectable()
 export class ConfigurationService {
@@ -14,6 +14,7 @@ export class ConfigurationService {
     supabaseUserId: string
   ): Promise<ConfigurationResponse> {
     await this.validateUserRole(supabaseUserId);
+
 
     const existingConfig = await this.prisma.hackathonConfig.findUnique({
       where: { key: newConfigurationData.key },
@@ -31,7 +32,7 @@ export class ConfigurationService {
   }
 
   async update(
-    key: string,
+    key: HackathonConfigKey,
     updateConfigurationData: UpdateConfigurationDTO,
     supabaseUserId: string
   ): Promise<ConfigurationResponse> {
@@ -48,7 +49,7 @@ export class ConfigurationService {
     });
   }
 
-  async findOne(key: string): Promise<ConfigurationResponse> {
+  async findOne(key: HackathonConfigKey): Promise<ConfigurationResponse> {
     const config = await this.prisma.hackathonConfig.findUnique({
       where: { key },
     });

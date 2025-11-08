@@ -16,10 +16,14 @@ import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 import { TeamStatus } from "@prisma/client";
 import { UpdateTeamDTO } from "./dto/update-team.dto";
+import { MatchmakingService } from "./matchmaking.service";
 
 @Controller("team")
 export class TeamController {
-  constructor(private readonly teamService: TeamService) {}
+  constructor(
+    private readonly teamService: TeamService,
+    private readonly matchmakingService: MatchmakingService
+  ) {}
 
   private async handleRequest<T>(fn: () => Promise<T>): Promise<T> {
     try {
@@ -50,7 +54,9 @@ export class TeamController {
     @Body() newTeamData: CreateTeamDTO,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser
   ) {
-    return this.handleRequest(() => this.teamService.create(newTeamData, supabaseUser.sub));
+    return this.handleRequest(() =>
+      this.teamService.create(newTeamData, supabaseUser.sub)
+    );
   }
 
   @Put(":id")
@@ -59,7 +65,9 @@ export class TeamController {
     @Body() updateTeamData: UpdateTeamDTO,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser
   ) {
-    return this.handleRequest(() => this.teamService.update(id, updateTeamData, supabaseUser.sub));
+    return this.handleRequest(() =>
+      this.teamService.update(id, updateTeamData, supabaseUser.sub)
+    );
   }
 
   @Patch(":id/status")
@@ -68,7 +76,9 @@ export class TeamController {
     @Body("status") status: TeamStatus,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser
   ) {
-    return this.handleRequest(() => this.teamService.updateStatus(id, status, supabaseUser.sub));
+    return this.handleRequest(() =>
+      this.teamService.updateStatus(id, status, supabaseUser.sub)
+    );
   }
 
   @Patch(":id/ignore-constraints")
@@ -78,7 +88,11 @@ export class TeamController {
     @SupabaseUser() supabaseUser: SupabaseDecodedUser
   ) {
     return this.handleRequest(() =>
-      this.teamService.updateIgnoreConstraints(id, ignoreConstraints, supabaseUser.sub)
+      this.teamService.updateIgnoreConstraints(
+        id,
+        ignoreConstraints,
+        supabaseUser.sub
+      )
     );
   }
 
@@ -115,7 +129,12 @@ export class TeamController {
   }
 
   @Delete(":id")
-  async remove(@Param("id") id: string, @SupabaseUser() supabaseUser: SupabaseDecodedUser) {
-    return this.handleRequest(() => this.teamService.remove(id, supabaseUser.sub));
+  async remove(
+    @Param("id") id: string,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+  ) {
+    return this.handleRequest(() =>
+      this.teamService.remove(id, supabaseUser.sub)
+    );
   }
 }

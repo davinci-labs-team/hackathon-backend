@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { Role, TeamStatus, User } from "@prisma/client";
 import { CreateTeamDTO } from "./dto/create-team.dto";
@@ -35,7 +39,10 @@ export class TeamService {
 
   async create(newTeamData: CreateTeamDTO, supabaseUserId: string) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
-    await this.validateThemeAndSubject(newTeamData.themeId, newTeamData.subjectId);
+    await this.validateThemeAndSubject(
+      newTeamData.themeId,
+      newTeamData.subjectId
+    );
 
     await Promise.all([
       this.validateUsersExist(newTeamData.memberIds || []),
@@ -50,13 +57,13 @@ export class TeamService {
         themeId: newTeamData.themeId,
         subjectId: newTeamData.subjectId,
         members: {
-          connect: newTeamData.memberIds?.map(id => ({ id })) || [],
+          connect: newTeamData.memberIds?.map((id) => ({ id })) || [],
         },
         juries: {
-          connect: newTeamData.juryIds?.map(id => ({ id })) || [],
+          connect: newTeamData.juryIds?.map((id) => ({ id })) || [],
         },
         mentors: {
-          connect: newTeamData.mentorIds?.map(id => ({ id })) || [],
+          connect: newTeamData.mentorIds?.map((id) => ({ id })) || [],
         },
       },
     });
@@ -64,10 +71,17 @@ export class TeamService {
     return { id: team.id };
   }
 
-  async update(id: string, updateTeamData: UpdateTeamDTO, supabaseUserId: string) {
+  async update(
+    id: string,
+    updateTeamData: UpdateTeamDTO,
+    supabaseUserId: string
+  ) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
     if (updateTeamData.themeId && updateTeamData.subjectId) {
-      await this.validateThemeAndSubject(updateTeamData.themeId, updateTeamData.subjectId);
+      await this.validateThemeAndSubject(
+        updateTeamData.themeId,
+        updateTeamData.subjectId
+      );
     }
 
     await Promise.all([
@@ -84,13 +98,13 @@ export class TeamService {
         themeId: updateTeamData.themeId,
         subjectId: updateTeamData.subjectId,
         members: updateTeamData.memberIds
-          ? { set: updateTeamData.memberIds.map(id => ({ id })) }
+          ? { set: updateTeamData.memberIds.map((id) => ({ id })) }
           : undefined,
         juries: updateTeamData.juryIds
-          ? { set: updateTeamData.juryIds.map(id => ({ id })) }
+          ? { set: updateTeamData.juryIds.map((id) => ({ id })) }
           : undefined,
         mentors: updateTeamData.mentorIds
-          ? { set: updateTeamData.mentorIds.map(id => ({ id })) }
+          ? { set: updateTeamData.mentorIds.map((id) => ({ id })) }
           : undefined,
       },
     });
@@ -109,7 +123,11 @@ export class TeamService {
     return { id: team.id };
   }
 
-  async updateIgnoreConstraints(id: string, ignoreConstraints: boolean, supabaseUserId: string) {
+  async updateIgnoreConstraints(
+    id: string,
+    ignoreConstraints: boolean,
+    supabaseUserId: string
+  ) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
 
     const team = await this.prisma.team.update({
@@ -146,7 +164,11 @@ export class TeamService {
     return teams as TeamResponse[];
   }
 
-  async assignUserToTeam(teamId: string, userId: string, supabaseUserId: string) {
+  async assignUserToTeam(
+    teamId: string,
+    userId: string,
+    supabaseUserId: string
+  ) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
 
     const user = await this.validateUserExists(userId);
@@ -174,7 +196,11 @@ export class TeamService {
     return { id: team.id };
   }
 
-  async withdrawUserFromTeam(teamId: string, userId: string, supabaseUserId: string) {
+  async withdrawUserFromTeam(
+    teamId: string,
+    userId: string,
+    supabaseUserId: string
+  ) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
 
     const user = await this.validateUserExists(userId);
@@ -207,7 +233,9 @@ export class TeamService {
         break;
 
       default:
-        throw new ForbiddenException(`Cannot withdraw user with role '${user.role}' from a team.`);
+        throw new ForbiddenException(
+          `Cannot withdraw user with role '${user.role}' from a team.`
+        );
     }
 
     const team = await this.prisma.team.update({
@@ -232,7 +260,8 @@ export class TeamService {
       where: { supabaseUserId },
     });
     if (!user) throw new NotFoundException("User not found.");
-    if (user.role !== role) throw new ForbiddenException("Only organizer can perform this action.");
+    if (user.role !== role)
+      throw new ForbiddenException("Only organizer can perform this action.");
     return user;
   }
 
@@ -250,8 +279,8 @@ export class TeamService {
       select: { id: true },
     });
 
-    const foundIds = users.map(u => u.id);
-    const missingIds = userIds.filter(id => !foundIds.includes(id));
+    const foundIds = users.map((u) => u.id);
+    const missingIds = userIds.filter((id) => !foundIds.includes(id));
     if (missingIds.length) {
       throw new NotFoundException(`Users not found: ${missingIds.join(", ")}`);
     }
@@ -259,11 +288,15 @@ export class TeamService {
 
   private async checkTeamExists(teamId: string) {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } });
-    if (!team) throw new NotFoundException(`Team with id '${teamId}' not found.`);
+    if (!team)
+      throw new NotFoundException(`Team with id '${teamId}' not found.`);
     return team;
   }
 
-  private async validateOrganizerAndTeam(teamId: string, supabaseUserId: string) {
+  private async validateOrganizerAndTeam(
+    teamId: string,
+    supabaseUserId: string
+  ) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     return this.checkTeamExists(teamId);
   }
@@ -336,10 +369,11 @@ export class TeamService {
     if (!config) throw new NotFoundException("No themes configuration found.");
 
     const themes = this.parseThemes(config.value);
-    const theme = themes.find(t => t.id === themeId);
-    if (!theme) throw new NotFoundException(`Theme with id '${themeId}' not found.`);
+    const theme = themes.find((t) => t.id === themeId);
+    if (!theme)
+      throw new NotFoundException(`Theme with id '${themeId}' not found.`);
 
-    const subject = theme.subjects.find(s => s.id === subjectId);
+    const subject = theme.subjects.find((s) => s.id === subjectId);
     if (!subject)
       throw new NotFoundException(
         `Subject with id '${subjectId}' not found in theme '${themeId}'.`
