@@ -1,13 +1,65 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateConfigurationDTO } from "./dto/update-configuration.dto";
 import { CreateConfigurationDTO } from "./dto/create-configuration.dto";
 import { ConfigurationResponse } from "./dto/configuration-response";
 import { Role, HackathonConfigKey } from "@prisma/client";
+import { PhaseSettings } from "./entities/phase_settings";
+import { LegalSettings } from "./entities/legal_settings";
+import { TextsSettings } from "./entities/texts_settings";
+import { MediaSettings } from "./entities/media_settings";
+import { ThemesSettings } from "./entities/themes_settings";
+import { PartnersSettings } from "./entities/partner_settings";
+import { MatchmakingSettings } from "./entities/matchmaking_settings";
+import { plainToInstance } from "class-transformer";
+import { validateOrReject } from "class-validator";
 
 @Injectable()
 export class ConfigurationService {
+  private configSchemas: Record<HackathonConfigKey, any> = {
+    PHASES: PhaseSettings,
+    LEGAL: LegalSettings,
+    TEXTS: TextsSettings,
+    MEDIA: MediaSettings,
+    THEMES: ThemesSettings,
+    PARTNERS: PartnersSettings,
+    MATCHMAKING: MatchmakingSettings,
+  };
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private async validateConfiguration(
+    key: HackathonConfigKey,
+    value: any
+  ): Promise<void> {
+    const schema = this.configSchemas[key];
+    if (!schema) {
+      throw new BadRequestException(
+        `No validation schema defined for key '${key}'`
+      );
+    }
+
+    if (Array.isArray(value)) {
+      const instances = value.map((item) => plainToInstance(schema, item));
+      for (const instance of instances) {
+        await validateOrReject(instance as object, {
+          whitelist: true,
+          forbidNonWhitelisted: true,
+        });
+      }
+    } else {
+      const instance = plainToInstance(schema, value);
+      await validateOrReject(instance as object, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+    }
+  }
 
   async create(
     newConfigurationData: CreateConfigurationDTO,
@@ -15,14 +67,19 @@ export class ConfigurationService {
   ): Promise<ConfigurationResponse> {
     await this.validateUserRole(supabaseUserId);
 
-
     const existingConfig = await this.prisma.hackathonConfig.findUnique({
       where: { key: newConfigurationData.key },
     });
     if (existingConfig) {
-      throw new Error(`Configuration with key '${newConfigurationData.key}' already exists.`);
+      throw new Error(
+        `Configuration with key '${newConfigurationData.key}' already exists.`
+      );
     }
 
+    await this.validateConfiguration(
+      newConfigurationData.key,
+      newConfigurationData.value
+    );
     return this.prisma.hackathonConfig.create({
       data: {
         key: newConfigurationData.key,
@@ -41,7 +98,10 @@ export class ConfigurationService {
     const config = await this.prisma.hackathonConfig.findUnique({
       where: { key },
     });
-    if (!config) throw new NotFoundException(`Configuration with key '${key}' not found`);
+    if (!config)
+      throw new NotFoundException(`Configuration with key '${key}' not found`);
+
+    await this.validateConfiguration(key, updateConfigurationData.value);
 
     return this.prisma.hackathonConfig.update({
       where: { key },
@@ -53,7 +113,8 @@ export class ConfigurationService {
     const config = await this.prisma.hackathonConfig.findUnique({
       where: { key },
     });
-    if (!config) throw new NotFoundException(`Configuration with key '${key}' not found`);
+    if (!config)
+      throw new NotFoundException(`Configuration with key '${key}' not found`);
     return config;
   }
 

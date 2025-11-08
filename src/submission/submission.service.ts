@@ -3,6 +3,7 @@ import { SubmissionStatus } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UpdateSubmissionDto } from "./dto/update-submission.dto";
 import { EvaluateSubmissionDto } from "./dto/evaluate-submission.dto";
+import { HackathonConfigKey } from "@prisma/client";
 
 // Define the Phase interface
 interface Phase {
@@ -34,7 +35,7 @@ export class SubmissionService {
 
   async getDueDate(): Promise<Date> {
     const hackathonConfig = await this.prisma.hackathonConfig.findFirst({
-      where: { key: "phases" },
+      where: { key: HackathonConfigKey.PHASES },
     });
 
     if (!hackathonConfig) {

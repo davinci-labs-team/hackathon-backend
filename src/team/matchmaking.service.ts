@@ -10,17 +10,4 @@ export class MatchmakingService {
     private readonly prisma: PrismaService,
     private readonly teamService: TeamService
   ) {}
-
-  async loadMatchmakingSettings(): Promise<void> {
-    const config = await this.prisma.hackathonConfig.findUnique({
-      // TODO: Use enum for keys
-      where: { key: "MATCHMAKING" },
-    });
-
-    if (config) {
-      this.matchmakingRules = config.value as MatchmakingSettings;
-    } else {
-      this.matchmakingRules = new MatchmakingSettings(false, 0, 0, []);
-    }
-  }
 }

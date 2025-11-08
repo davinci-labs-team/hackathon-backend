@@ -1,37 +1,33 @@
-export class Constraint {
-  rule: "MIN" | "MAX" | "EQUAL";
-  schools: string[];
-  value: number;
-  multiple: boolean;
+import { IsBoolean, IsInt, IsString, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
-  constructor(
-    rule: "MIN" | "MAX" | "EQUAL",
-    schools: string[],
-    value: number,
-    multiple: boolean
-  ) {
-    this.rule = rule;
-    this.schools = schools;
-    this.value = value;
-    this.multiple = multiple;
-  }
+export class Constraint {
+  @IsString()
+  rule: 'MIN' | 'MAX' | 'EQUAL';
+
+  @IsArray()
+  @IsString({ each: true })
+  schools: string[];
+
+  @IsInt()
+  value: number;
+
+  @IsBoolean()
+  multiple: boolean;
 }
 
 export class MatchmakingSettings {
+  @IsBoolean()
   isActive: boolean;
-  teamSizeMin: number;
-  teamSizeMax: number;
-  constraints: Constraint[];
 
-  constructor(
-    isActive: boolean,
-    teamSizeMin: number,
-    teamSizeMax: number,
-    constraints: Constraint[]
-  ) {
-    this.isActive = isActive;
-    this.teamSizeMin = teamSizeMin;
-    this.teamSizeMax = teamSizeMax;
-    this.constraints = constraints;
-  }
+  @IsInt()
+  teamSizeMin: number;
+
+  @IsInt()
+  teamSizeMax: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Constraint)
+  constraints: Constraint[];
 }
