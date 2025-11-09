@@ -54,14 +54,25 @@ export class TeamService {
     );
   }
 
-  async runMatchmakingScript(): Promise<MatchmakingTeam[]> {
-    const scriptPath = path.join(
-      process.cwd(),
-      "python/matchmaking.py"
+  async getSubjectName(themes: Theme[], subjectId: string): Promise<string> {
+    for (const theme of themes) {
+      const subject = theme.subjects.find((s) => s.id === subjectId);
+      if (subject) {
+        return subject.name;
+      }
+    }
+    throw new NotFoundException(
+      `No subject found with id '${subjectId}'.`
     );
+  }
+
+  async runMatchmakingScript(): Promise<MatchmakingTeam[]> {
+    const scriptPath = path.join(process.cwd(), "python", "matchmaking.py");
+
+    const pythonPath = path.join(process.cwd(), "venv", "bin", "python"); 
 
     return new Promise<MatchmakingTeam[]>((resolve, reject) => {
-      const pythonProcess = spawn("python3", [scriptPath]);
+      const pythonProcess = spawn(pythonPath, [scriptPath]);
 
       let dataString = "";
       let errorString = "";
@@ -102,7 +113,7 @@ export class TeamService {
       where: { key: HackathonConfigKey.MATCHMAKING },
     });
 
-    const tmpDir = join(process.cwd(), "tmp_matchmaking");
+    const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
     const filePath = join(tmpDir, "matchmaking_config.json");
 
     // Create temp directory if it doesn't exist
@@ -113,7 +124,7 @@ export class TeamService {
   }
 
   async saveTmpUsersFile(usersJson: string): Promise<void> {
-    const tmpDir = join(process.cwd(), "tmp_matchmaking");
+    const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
     const filePath = join(tmpDir, "users.json");
 
     // Create temp directory if it doesn't exist
@@ -132,9 +143,6 @@ export class TeamService {
     })
     const subjectsIds = this.parseThemesSettings(themes ? themes.value : []).flatMap(t => t.subjects.map(s => s.id));
 
-    // TO REMOVE
-    console.log("Subjects IDs:", subjectsIds);
-
     const usersBySubject = await Promise.all(
       subjectsIds.map(async (subjectId) => {
         const users = await this.prisma.user.findMany({
@@ -149,25 +157,22 @@ export class TeamService {
       })
     );
 
-    // TO REMOVE
-    console.log("Users by subject:", usersBySubject);
-
     for (const {subjectId, users} of usersBySubject) {
       if (users.length === 0) continue;
 
       await this.saveTmpUsersFile(JSON.stringify(users));
 
-      const themeId = await this.getThemeId(themes ? this.parseThemesSettings(themes.value) : [], subjectId);
+      const themeSettings = this.parseThemesSettings(themes ? themes.value : []);
+
+      const themeId = await this.getThemeId(themeSettings, subjectId);
+      const subjectName = await this.getSubjectName(themeSettings, subjectId);
 
       const matchmakingTeams = await this.runMatchmakingScript();
-
-      // TO REMOVE
-      console.log(`Matchmaking teams for subject ${subjectId}:`, matchmakingTeams);
 
       // team name is Team_subjectName_index
       for (let i = 0; i < matchmakingTeams.length; i++) {
         const mmTeam = matchmakingTeams[i];
-        const teamName = `Team_${subjectId}_${i + 1}`;
+        const teamName = `Team_${subjectName}_${i + 1}`;
 
         const createTeamDTO: CreateTeamDTO = {
           name: teamName,
@@ -447,43 +452,11 @@ export class TeamService {
     return this.checkTeamExists(teamId);
   }
 
-  // TODO: Refacto to secure theme and subject validation when creating/updating a team
-  // Add these interfaces at the top of your file (or in a separate types file)
-
-  // Replace the parseThemes method with this type-safe version:
   private parseThemesSettings(value: unknown): Theme[] {
     if (!value || typeof value !== 'object' || !('themes' in value)) return [];
     const settings = value as ThemesSettings;
     return settings.themes ?? [];
   }
-
-  // Add these type guard methods
-  /*private isRawTheme(value: unknown): value is RawTheme {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "id" in value &&
-      typeof value.id === "string" &&
-      "name" in value &&
-      typeof value.name === "string" &&
-      "description" in value &&
-      typeof value.description === "string" &&
-      "subjects" in value
-    );
-  }
-
-  private isRawSubject(value: unknown): value is RawSubject {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "id" in value &&
-      typeof value.id === "string" &&
-      "name" in value &&
-      typeof value.name === "string" &&
-      "description" in value &&
-      typeof value.description === "string"
-    );
-  }*/
 
   private async validateThemeAndSubject(themeId: string, subjectId: string) {
     const config = await this.prisma.hackathonConfig.findUnique({

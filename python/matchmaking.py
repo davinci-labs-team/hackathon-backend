@@ -1,26 +1,25 @@
 import json
 from matchmaking_settings import MatchmakingSettings
 from ortools.sat.python import cp_model
+from pathlib import Path
 
 class User:
     def __init__(self, user_id: str, school: str):
         self.user_id = user_id
         self.school = school
 
+TMP_DIR = Path(__file__).parent / 'tmp_matchmaking'
 
-def load_users(path='users.json'):
-    """Charge les utilisateurs depuis un fichier JSON."""
+def load_users(path: Path = TMP_DIR / 'users.json'):
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return [User(u['id'], u['school']) for u in data]
 
 
-def load_settings(path='matchmaking_config.json'):
-    """Charge les paramètres de matchmaking depuis un fichier JSON."""
+def load_settings(path: Path = TMP_DIR / 'matchmaking_config.json'):
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return MatchmakingSettings.model_validate(data)
-
 
 def run_matchmaking():
     users = load_users()
@@ -125,16 +124,6 @@ def run_matchmaking():
             team_id = solver.Value(team_vars[idx])
             if team_id != max_teams:
                 teams[team_id].append({"user_id": u.user_id, "school": u.school})
-
-        # Print not assigned users
-        not_assigned = []
-        for idx, u in enumerate(users):
-            team_id = solver.Value(team_vars[idx])
-            if team_id == max_teams:
-                not_assigned.append({"user_id": u.user_id, "school": u.school})
-        if not_assigned:
-            print("Utilisateurs non assignés:")
-            print(json.dumps(not_assigned, indent=2, ensure_ascii=False))
 
         # JSON de sortie
         output_teams = []
