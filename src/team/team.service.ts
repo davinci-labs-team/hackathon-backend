@@ -4,11 +4,17 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { Role, TeamStatus, User } from "@prisma/client";
+import { HackathonConfigKey, Role, TeamStatus, User } from "@prisma/client";
 import { CreateTeamDTO } from "./dto/create-team.dto";
 import { UpdateTeamDTO } from "./dto/update-team.dto";
 import { TeamResponse } from "./dto/team-response";
 import { Theme } from "src/configuration/entities/theme-subject.entity";
+import { spawn } from "child_process";
+import { join } from "path";
+import * as path from "path";
+import { promises as fs } from "fs";
+import { MatchmakingTeam } from "./types/matchmaking-team.interface";
+import { ThemesSettings } from "src/configuration/entities/themes_settings";
 
 interface RawSubject {
   id: string;
@@ -34,6 +40,147 @@ export class TeamService {
     school: true,
     role: true,
   };
+
+  // ------------ AUTOGENERATE TEAMS ------------
+
+  async getThemeId(themes: Theme[], subjectId: string): Promise<string> {
+    for (const theme of themes) {
+      if (theme.subjects.some((s) => s.id === subjectId)) {
+        return theme.id;
+      }
+    }
+    throw new NotFoundException(
+      `No theme found for subject with id '${subjectId}'.`
+    );
+  }
+
+  async runMatchmakingScript(): Promise<MatchmakingTeam[]> {
+    const scriptPath = path.join(
+      process.cwd(),
+      "python/matchmaking.py"
+    );
+
+    return new Promise<MatchmakingTeam[]>((resolve, reject) => {
+      const pythonProcess = spawn("python3", [scriptPath]);
+
+      let dataString = "";
+      let errorString = "";
+
+      pythonProcess.stdout.on("data", (data) => {
+        dataString += data.toString();
+      });
+
+      pythonProcess.stderr.on("data", (data) => {
+        errorString += data.toString();
+      });
+
+      pythonProcess.on("close", (code) => {
+        if (code === 0) {
+          try {
+            const result: MatchmakingTeam[] = JSON.parse(dataString);
+            resolve(result);
+          } catch (err) {
+            reject(
+              new Error(
+                `Failed to parse matchmaking script output: ${err.message}`
+              )
+            );
+          }
+        } else {
+          reject(
+            new Error(
+              `Matchmaking script exited with code ${code}: ${errorString}`
+            )
+          );
+        }
+      });
+    });
+  }
+
+  async saveTmpMatchmakingSettingsFile(): Promise<void> {
+    const config = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.MATCHMAKING },
+    });
+
+    const tmpDir = join(process.cwd(), "tmp_matchmaking");
+    const filePath = join(tmpDir, "matchmaking_config.json");
+
+    // Create temp directory if it doesn't exist
+    await fs.mkdir(tmpDir, { recursive: true });
+
+    // Write config to file
+    await fs.writeFile(filePath, JSON.stringify(config?.value || {}), "utf-8");
+  }
+
+  async saveTmpUsersFile(usersJson: string): Promise<void> {
+    const tmpDir = join(process.cwd(), "tmp_matchmaking");
+    const filePath = join(tmpDir, "users.json");
+
+    // Create temp directory if it doesn't exist
+    await fs.mkdir(tmpDir, { recursive: true });
+
+    // Write users to file
+    await fs.writeFile(filePath, usersJson, "utf-8");
+  }
+
+  async autogenerateTeams(supabaseUserId: string) {
+    await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
+    await this.saveTmpMatchmakingSettingsFile();
+
+    const themes = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.THEMES },
+    })
+    const subjectsIds = this.parseThemesSettings(themes ? themes.value : []).flatMap(t => t.subjects.map(s => s.id));
+
+    // TO REMOVE
+    console.log("Subjects IDs:", subjectsIds);
+
+    const usersBySubject = await Promise.all(
+      subjectsIds.map(async (subjectId) => {
+        const users = await this.prisma.user.findMany({
+          where: {
+            role: Role.PARTICIPANT,
+            favoriteSubjectId: subjectId,
+            teamId: null,
+          },
+          select: { id: true, school: true },
+        });
+        return {subjectId, users};
+      })
+    );
+
+    // TO REMOVE
+    console.log("Users by subject:", usersBySubject);
+
+    for (const {subjectId, users} of usersBySubject) {
+      if (users.length === 0) continue;
+
+      await this.saveTmpUsersFile(JSON.stringify(users));
+
+      const themeId = await this.getThemeId(themes ? this.parseThemesSettings(themes.value) : [], subjectId);
+
+      const matchmakingTeams = await this.runMatchmakingScript();
+
+      // TO REMOVE
+      console.log(`Matchmaking teams for subject ${subjectId}:`, matchmakingTeams);
+
+      // team name is Team_subjectName_index
+      for (let i = 0; i < matchmakingTeams.length; i++) {
+        const mmTeam = matchmakingTeams[i];
+        const teamName = `Team_${subjectId}_${i + 1}`;
+
+        const createTeamDTO: CreateTeamDTO = {
+          name: teamName,
+          description: `Auto-generated team for subject ${subjectId}`,
+          subjectId: subjectId,
+          themeId: themeId,
+          memberIds: mmTeam.members.map((m) => m.user_id),
+        };
+
+        await this.create(createTeamDTO, supabaseUserId);
+      }
+    }
+  }
 
   // ------------------ CRUD ------------------
 
@@ -83,7 +230,6 @@ export class TeamService {
         updateTeamData.subjectId
       );
     }
-
     await Promise.all([
       this.validateUsersExist(updateTeamData.memberIds || []),
       this.validateUsersExist(updateTeamData.juryIds || []),
@@ -272,7 +418,7 @@ export class TeamService {
   }
 
   private async validateUsersExist(userIds: string[]) {
-    if (!userIds.length) return;
+    if (!userIds.length || userIds.length === 0) return;
 
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
@@ -305,37 +451,14 @@ export class TeamService {
   // Add these interfaces at the top of your file (or in a separate types file)
 
   // Replace the parseThemes method with this type-safe version:
-  private parseThemes(value: unknown): Theme[] {
-    if (!Array.isArray(value)) return [];
-
-    return value.map((t: unknown) => {
-      // Type guard to ensure t is an object with the expected properties
-      if (!this.isRawTheme(t)) {
-        throw new Error("Invalid theme structure");
-      }
-
-      return {
-        id: t.id,
-        name: t.name,
-        description: t.description,
-        subjects: Array.isArray(t.subjects)
-          ? t.subjects.map((s: unknown) => {
-              if (!this.isRawSubject(s)) {
-                throw new Error("Invalid subject structure");
-              }
-              return {
-                id: s.id,
-                name: s.name,
-                description: s.description,
-              };
-            })
-          : [],
-      };
-    });
+  private parseThemesSettings(value: unknown): Theme[] {
+    if (!value || typeof value !== 'object' || !('themes' in value)) return [];
+    const settings = value as ThemesSettings;
+    return settings.themes ?? [];
   }
 
   // Add these type guard methods
-  private isRawTheme(value: unknown): value is RawTheme {
+  /*private isRawTheme(value: unknown): value is RawTheme {
     return (
       typeof value === "object" &&
       value !== null &&
@@ -360,15 +483,15 @@ export class TeamService {
       "description" in value &&
       typeof value.description === "string"
     );
-  }
+  }*/
 
   private async validateThemeAndSubject(themeId: string, subjectId: string) {
     const config = await this.prisma.hackathonConfig.findUnique({
-      where: { key: "THEMES" },
+      where: { key: HackathonConfigKey.THEMES },
     });
     if (!config) throw new NotFoundException("No themes configuration found.");
 
-    const themes = this.parseThemes(config.value);
+    const themes = this.parseThemesSettings(config.value);
     const theme = themes.find((t) => t.id === themeId);
     if (!theme)
       throw new NotFoundException(`Theme with id '${themeId}' not found.`);

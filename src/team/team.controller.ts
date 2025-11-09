@@ -16,13 +16,11 @@ import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 import { TeamStatus } from "@prisma/client";
 import { UpdateTeamDTO } from "./dto/update-team.dto";
-import { MatchmakingService } from "./matchmaking.service";
 
 @Controller("team")
 export class TeamController {
   constructor(
     private readonly teamService: TeamService,
-    private readonly matchmakingService: MatchmakingService
   ) {}
 
   private async handleRequest<T>(fn: () => Promise<T>): Promise<T> {
@@ -56,6 +54,15 @@ export class TeamController {
   ) {
     return this.handleRequest(() =>
       this.teamService.create(newTeamData, supabaseUser.sub)
+    );
+  }
+
+  @Post("autogenerate")
+  async autogenerateTeams(
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+  ) {
+    return this.handleRequest(() =>
+      this.teamService.autogenerateTeams(supabaseUser.sub)
     );
   }
 
