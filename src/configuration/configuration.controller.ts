@@ -13,7 +13,7 @@ export class ConfigurationController {
   @Post()
   async create(
     @Body() newConfigurationData: CreateConfigurationDTO,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.settingsService.create(newConfigurationData, supabaseUser.sub);
   }
@@ -22,9 +22,13 @@ export class ConfigurationController {
   async update(
     @Param("key") key: HackathonConfigKey,
     @Body() updateConfigurationData: UpdateConfigurationDTO,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.settingsService.update(key, updateConfigurationData, supabaseUser.sub);
+    return this.settingsService.update(
+      key,
+      updateConfigurationData,
+      supabaseUser.sub,
+    );
   }
 
   @Get(":key")

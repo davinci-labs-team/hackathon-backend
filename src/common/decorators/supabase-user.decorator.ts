@@ -10,5 +10,5 @@ export const SupabaseUser = createParamDecorator(
     const request = ctx.switchToHttp().getRequest<CustomRequest>();
     const user = request.user;
     return user;
-  }
+  },
 );

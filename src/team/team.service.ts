@@ -16,18 +16,18 @@ import { promises as fs } from "fs";
 import { MatchmakingTeam } from "./types/matchmaking-team.interface";
 import { ThemesSettings } from "src/configuration/entities/themes_settings";
 
-interface RawSubject {
+/*interface RawSubject {
   id: string;
   name: string;
   description: string;
-}
+}*/
 
-interface RawTheme {
+/*interface RawTheme {
   id: string;
   name: string;
   description: string;
   subjects: RawSubject[];
-}
+}*/
 
 @Injectable()
 export class TeamService {
@@ -43,65 +43,65 @@ export class TeamService {
 
   // ------------ AUTOGENERATE TEAMS ------------
 
-  async getThemeId(themes: Theme[], subjectId: string): Promise<string> {
+  getThemeId(themes: Theme[], subjectId: string): string {
     for (const theme of themes) {
       if (theme.subjects.some((s) => s.id === subjectId)) {
         return theme.id;
       }
     }
     throw new NotFoundException(
-      `No theme found for subject with id '${subjectId}'.`
+      `No theme found for subject with id '${subjectId}'.`,
     );
   }
 
-  async getSubjectName(themes: Theme[], subjectId: string): Promise<string> {
+  getSubjectName(themes: Theme[], subjectId: string): string {
     for (const theme of themes) {
       const subject = theme.subjects.find((s) => s.id === subjectId);
       if (subject) {
         return subject.name;
       }
     }
-    throw new NotFoundException(
-      `No subject found with id '${subjectId}'.`
-    );
+    throw new NotFoundException(`No subject found with id '${subjectId}'.`);
   }
 
   async runMatchmakingScript(): Promise<MatchmakingTeam[]> {
     const scriptPath = path.join(process.cwd(), "python", "matchmaking.py");
 
-    const pythonPath = path.join(process.cwd(), "venv", "bin", "python"); 
+    const pythonPath = path.join(process.cwd(), "venv", "bin", "python");
 
     return new Promise<MatchmakingTeam[]>((resolve, reject) => {
       const pythonProcess = spawn(pythonPath, [scriptPath]);
 
-      let dataString = "";
-      let errorString = "";
+      let dataString: string = "";
+      let errorString: string = "";
 
-      pythonProcess.stdout.on("data", (data) => {
-        dataString += data.toString();
+      pythonProcess.stdout.on("data", (data: Buffer) => {
+        dataString += data.toString("utf-8");
       });
 
-      pythonProcess.stderr.on("data", (data) => {
-        errorString += data.toString();
+      pythonProcess.stderr.on("data", (data: Buffer) => {
+        errorString += data.toString("utf-8");
       });
 
-      pythonProcess.on("close", (code) => {
+      pythonProcess.on("close", (code: number | null) => {
         if (code === 0) {
           try {
-            const result: MatchmakingTeam[] = JSON.parse(dataString);
+            const result: MatchmakingTeam[] = JSON.parse(
+              dataString,
+            ) as MatchmakingTeam[];
             resolve(result);
           } catch (err) {
             reject(
               new Error(
-                `Failed to parse matchmaking script output: ${err.message}`
-              )
+                `Failed to parse matchmaking script output: ${String(err)}`,
+              ),
             );
           }
         } else {
           reject(
             new Error(
-              `Matchmaking script exited with code ${code}: ${errorString}`
-            )
+              `Matchmaking script exited with code ${code}: ${errorString}`,
+            ),
           );
         }
       });
@@ -140,8 +140,10 @@ export class TeamService {
 
     const themes = await this.prisma.hackathonConfig.findUnique({
       where: { key: HackathonConfigKey.THEMES },
-    })
-    const subjectsIds = this.parseThemesSettings(themes ? themes.value : []).flatMap(t => t.subjects.map(s => s.id));
+    });
+    const subjectsIds = this.parseThemesSettings(
+      themes ? themes.value : [],
+    ).flatMap((t) => t.subjects.map((s) => s.id));
 
     const usersBySubject = await Promise.all(
       subjectsIds.map(async (subjectId) => {
@@ -153,19 +155,21 @@ export class TeamService {
           },
           select: { id: true, school: true },
         });
-        return {subjectId, users};
-      })
+        return { subjectId, users };
+      }),
     );
 
-    for (const {subjectId, users} of usersBySubject) {
+    for (const { subjectId, users } of usersBySubject) {
       if (users.length === 0) continue;
 
       await this.saveTmpUsersFile(JSON.stringify(users));
 
-      const themeSettings = this.parseThemesSettings(themes ? themes.value : []);
+      const themeSettings = this.parseThemesSettings(
+        themes ? themes.value : [],
+      );
 
-      const themeId = await this.getThemeId(themeSettings, subjectId);
-      const subjectName = await this.getSubjectName(themeSettings, subjectId);
+      const themeId = this.getThemeId(themeSettings, subjectId);
+      const subjectName = this.getSubjectName(themeSettings, subjectId);
 
       const matchmakingTeams = await this.runMatchmakingScript();
 
@@ -193,7 +197,7 @@ export class TeamService {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     await this.validateThemeAndSubject(
       newTeamData.themeId,
-      newTeamData.subjectId
+      newTeamData.subjectId,
     );
 
     await Promise.all([
@@ -226,13 +230,13 @@ export class TeamService {
   async update(
     id: string,
     updateTeamData: UpdateTeamDTO,
-    supabaseUserId: string
+    supabaseUserId: string,
   ) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
     if (updateTeamData.themeId && updateTeamData.subjectId) {
       await this.validateThemeAndSubject(
         updateTeamData.themeId,
-        updateTeamData.subjectId
+        updateTeamData.subjectId,
       );
     }
     await Promise.all([
@@ -277,7 +281,7 @@ export class TeamService {
   async updateIgnoreConstraints(
     id: string,
     ignoreConstraints: boolean,
-    supabaseUserId: string
+    supabaseUserId: string,
   ) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
 
@@ -318,14 +322,14 @@ export class TeamService {
   async assignUserToTeam(
     teamId: string,
     userId: string,
-    supabaseUserId: string
+    supabaseUserId: string,
   ) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
 
     const user = await this.validateUserExists(userId);
     if (user.teamId) {
       throw new ForbiddenException(
-        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`
+        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`,
       );
     }
 
@@ -350,7 +354,7 @@ export class TeamService {
   async withdrawUserFromTeam(
     teamId: string,
     userId: string,
-    supabaseUserId: string
+    supabaseUserId: string,
   ) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
 
@@ -369,7 +373,7 @@ export class TeamService {
       case Role.PARTICIPANT:
         if (user.teamId !== teamId) {
           throw new ForbiddenException(
-            `User with id '${user.id}' is not a member of team with id '${teamId}'.`
+            `User with id '${user.id}' is not a member of team with id '${teamId}'.`,
           );
         }
         relationKey = "members";
@@ -385,7 +389,7 @@ export class TeamService {
 
       default:
         throw new ForbiddenException(
-          `Cannot withdraw user with role '${user.role}' from a team.`
+          `Cannot withdraw user with role '${user.role}' from a team.`,
         );
     }
 
@@ -446,14 +450,14 @@ export class TeamService {
 
   private async validateOrganizerAndTeam(
     teamId: string,
-    supabaseUserId: string
+    supabaseUserId: string,
   ) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     return this.checkTeamExists(teamId);
   }
 
   private parseThemesSettings(value: unknown): Theme[] {
-    if (!value || typeof value !== 'object' || !('themes' in value)) return [];
+    if (!value || typeof value !== "object" || !("themes" in value)) return [];
     const settings = value as ThemesSettings;
     return settings.themes ?? [];
   }
@@ -472,7 +476,7 @@ export class TeamService {
     const subject = theme.subjects.find((s) => s.id === subjectId);
     if (!subject)
       throw new NotFoundException(
-        `Subject with id '${subjectId}' not found in theme '${themeId}'.`
+        `Subject with id '${subjectId}' not found in theme '${themeId}'.`,
       );
   }
 }

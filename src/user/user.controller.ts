@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -14,7 +22,7 @@ export class UserController {
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.userService.create(createUserDto, supabaseUser.sub);
   }
@@ -49,13 +57,16 @@ export class UserController {
   update(
     @Param("userId") userId: UUID,
     @Body() updateUserDto: UpdateUserDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.userService.update(userId, updateUserDto, supabaseUser.sub);
   }
 
   @Delete(":userId")
-  remove(@Param("userId") userId: UUID, @SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+  remove(
+    @Param("userId") userId: UUID,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+  ) {
     return this.userService.remove(userId, supabaseUser.sub);
   }
 }

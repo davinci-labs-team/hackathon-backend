@@ -3,7 +3,6 @@ import {
   ValidateNested,
   IsNumber,
   IsOptional,
-  IsString,
   IsDateString,
 } from "class-validator";
 import { Type } from "class-transformer";

@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { AnnouncementService } from "./announcement.service";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
@@ -15,14 +24,14 @@ import { VisibilityType } from "./enums/visibility-type.enum";
 export class AnnouncementController {
   constructor(
     private readonly announcementService: AnnouncementService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post()
   async create(
     @Body()
     createAnnouncementDto: CreateAnnouncementDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     // check if user exists and have ORGANIZER role
     const user = await this.prisma.user.findUnique({
@@ -38,7 +47,9 @@ export class AnnouncementController {
 
   @Get()
   async getAll(@Query() query: VisibilityTypeRequest): Promise<Announcement[]> {
-    return this.announcementService.getAll(query.visibilityType || VisibilityType.BOTH);
+    return this.announcementService.getAll(
+      query.visibilityType || VisibilityType.BOTH,
+    );
   }
 
   @Get(":id")
@@ -49,7 +60,7 @@ export class AnnouncementController {
   @Delete(":id")
   async delete(
     @Param("id") id: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<void> {
     // check if user exists and have ORGANIZER role
     const user = await this.prisma.user.findUnique({
@@ -68,7 +79,7 @@ export class AnnouncementController {
     @Param("id") id: string,
     @Body()
     updateAnnouncementDto: UpdateAnnouncementDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     // check if user exists and have ORGANIZER role
     const user = await this.prisma.user.findUnique({

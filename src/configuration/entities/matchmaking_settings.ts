@@ -1,9 +1,15 @@
-import { IsBoolean, IsInt, IsString, IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsInt,
+  IsString,
+  IsArray,
+  ValidateNested,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class Constraint {
   @IsString()
-  rule: 'MIN' | 'MAX' | 'EQUAL';
+  rule: "MIN" | "MAX" | "EQUAL";
 
   @IsArray()
   @IsString({ each: true })

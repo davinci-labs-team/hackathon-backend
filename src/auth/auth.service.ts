@@ -48,14 +48,14 @@ export class AuthService {
       }),
       {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      }
+      },
     );
 
     const access_token = tokenRes.data.access_token;
 
     const userRes: AxiosResponse<DiscordApiUser> = await axios.get(
       "https://discord.com/api/users/@me",
-      { headers: { Authorization: `Bearer ${access_token}` } }
+      { headers: { Authorization: `Bearer ${access_token}` } },
     );
 
     return userRes.data;
@@ -64,7 +64,7 @@ export class AuthService {
   async updateUserWithDiscord(
     userId: string,
     supabaseUserId: string,
-    discordUser: DiscordUser
+    discordUser: DiscordUser,
   ): Promise<void> {
     const userId_uuid = userId as UUID;
 
@@ -90,14 +90,17 @@ export class AuthService {
         code,
         redirect_uri: process.env.GITHUB_REDIRECT_URI!,
       },
-      { headers: { Accept: "application/json" } }
+      { headers: { Accept: "application/json" } },
     );
 
     const access_token = tokenRes.data.access_token;
 
-    const userRes: AxiosResponse<GithubApiUser> = await axios.get("https://api.github.com/user", {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
+    const userRes: AxiosResponse<GithubApiUser> = await axios.get(
+      "https://api.github.com/user",
+      {
+        headers: { Authorization: `Bearer ${access_token}` },
+      },
+    );
 
     return { ...userRes.data, access_token };
   }
@@ -105,7 +108,7 @@ export class AuthService {
   async updateUserWithGithub(
     userId: string,
     supabaseUserId: string,
-    githubUser: GithubApiUser
+    githubUser: GithubApiUser,
   ): Promise<void> {
     await this.userService.update(
       userId as UUID,
@@ -116,7 +119,7 @@ export class AuthService {
           accessToken: githubUser.access_token,
         },
       },
-      supabaseUserId
+      supabaseUserId,
     );
   }
 }

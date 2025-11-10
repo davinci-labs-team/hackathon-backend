@@ -19,9 +19,11 @@ import { MatchmakingSettings } from "./entities/matchmaking_settings";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 
+type ConfigSchemaClass<T = unknown> = new (...args: any[]) => T;
+
 @Injectable()
 export class ConfigurationService {
-  private configSchemas: Record<HackathonConfigKey, any> = {
+  private configSchemas: Record<HackathonConfigKey, ConfigSchemaClass> = {
     PHASES: PhaseSettings,
     LEGAL: LegalSettings,
     TEXTS: TextsSettings,
@@ -35,12 +37,12 @@ export class ConfigurationService {
 
   private async validateConfiguration(
     key: HackathonConfigKey,
-    value: any
+    value: unknown,
   ): Promise<void> {
     const schema = this.configSchemas[key];
     if (!schema) {
       throw new BadRequestException(
-        `No validation schema defined for key '${key}'`
+        `No validation schema defined for key '${key}'`,
       );
     }
 
@@ -63,7 +65,7 @@ export class ConfigurationService {
 
   async create(
     newConfigurationData: CreateConfigurationDTO,
-    supabaseUserId: string
+    supabaseUserId: string,
   ): Promise<ConfigurationResponse> {
     await this.validateUserRole(supabaseUserId);
 
@@ -72,13 +74,13 @@ export class ConfigurationService {
     });
     if (existingConfig) {
       throw new Error(
-        `Configuration with key '${newConfigurationData.key}' already exists.`
+        `Configuration with key '${newConfigurationData.key}' already exists.`,
       );
     }
 
     await this.validateConfiguration(
       newConfigurationData.key,
-      newConfigurationData.value
+      newConfigurationData.value,
     );
     return this.prisma.hackathonConfig.create({
       data: {
@@ -91,7 +93,7 @@ export class ConfigurationService {
   async update(
     key: HackathonConfigKey,
     updateConfigurationData: UpdateConfigurationDTO,
-    supabaseUserId: string
+    supabaseUserId: string,
   ): Promise<ConfigurationResponse> {
     await this.validateUserRole(supabaseUserId);
 

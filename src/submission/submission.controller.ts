@@ -12,12 +12,16 @@ export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) {}
 
   @Post()
-  async create(@Body() submission: CreateSubmissionDto): Promise<submissionReponseDto> {
+  async create(
+    @Body() submission: CreateSubmissionDto,
+  ): Promise<submissionReponseDto> {
     return this.submissionService.createsubmission(submission.teamId);
   }
 
   @Get()
-  async find(@Query() submission: CreateSubmissionDto): Promise<submissionReponseDto[]> {
+  async find(
+    @Query() submission: CreateSubmissionDto,
+  ): Promise<submissionReponseDto[]> {
     return this.submissionService.getsubmissions(submission.teamId);
   }
 
@@ -27,15 +31,20 @@ export class SubmissionController {
   }
 
   @Put()
-  async update(@Body() submission: UpdateSubmissionDto): Promise<submissionReponseDto> {
+  async update(
+    @Body() submission: UpdateSubmissionDto,
+  ): Promise<submissionReponseDto> {
     return this.submissionService.updatesubmission(submission);
   }
 
   @Post("evaluate")
   async evaluate(
     @Body() evaluation: EvaluateSubmissionDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<submissionReponseDto> {
-    return this.submissionService.evaluatesubmission(evaluation, supabaseUser.sub);
+    return this.submissionService.evaluatesubmission(
+      evaluation,
+      supabaseUser.sub,
+    );
   }
 }

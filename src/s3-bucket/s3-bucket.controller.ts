@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from "@nestjs/common";
 import { S3BucketService } from "./s3-bucket.service";
 import { Public } from "../common/decorators/public.decorator";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -13,7 +20,9 @@ export class S3BucketController {
 
   @Public()
   @Get("download/:filePath")
-  async getFileUrl(@Param("filePath") filePath: string): Promise<FileResponseDto> {
+  async getFileUrl(
+    @Param("filePath") filePath: string,
+  ): Promise<FileResponseDto> {
     const url = await this.s3BucketService.getFileUrl("annonces", filePath);
     return { url };
   }
@@ -23,7 +32,9 @@ export class S3BucketController {
   @UseInterceptors(FileInterceptor("file"))
   @ApiConsumes("multipart/form-data")
   @ApiBody({ type: FileUploadDto })
-  async uploadFile(@UploadedFile() file: Express.Multer.File): Promise<UploadResponseDto> {
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UploadResponseDto> {
     const path = await this.s3BucketService.uploadFile("annonces", file);
     return { path };
   }

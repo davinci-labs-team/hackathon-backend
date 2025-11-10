@@ -53,7 +53,7 @@ export class SubmissionService {
       throw new Error("Invalid format for hackathonConfig.value");
     }
 
-    const phase3 = phases.find(phase => phase.order === 3);
+    const phase3 = phases.find((phase) => phase.order === 3);
 
     if (!phase3?.endDate) {
       throw new Error("Phase 3 endDate not found");
@@ -73,13 +73,18 @@ export class SubmissionService {
     });
   }
 
-  async evaluatesubmission(evaluation: EvaluateSubmissionDto, supabaseJuryId: string) {
+  async evaluatesubmission(
+    evaluation: EvaluateSubmissionDto,
+    supabaseJuryId: string,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { supabaseUserId: supabaseJuryId },
     });
 
     if (!user) {
-      throw new NotFoundException(`Jury with supabaseUserId ${supabaseJuryId} not found`);
+      throw new NotFoundException(
+        `Jury with supabaseUserId ${supabaseJuryId} not found`,
+      );
     }
 
     const juryId = user.id;
@@ -98,7 +103,10 @@ export class SubmissionService {
       where: { submissionId: evaluation.submissionId },
     });
 
-    const total_grade = all_evaluations.reduce((sum, evalItem) => sum + evalItem.grade, 0);
+    const total_grade = all_evaluations.reduce(
+      (sum, evalItem) => sum + evalItem.grade,
+      0,
+    );
 
     const average_grade = Math.round(total_grade / all_evaluations.length);
 

@@ -19,9 +19,7 @@ import { UpdateTeamDTO } from "./dto/update-team.dto";
 
 @Controller("team")
 export class TeamController {
-  constructor(
-    private readonly teamService: TeamService,
-  ) {}
+  constructor(private readonly teamService: TeamService) {}
 
   private async handleRequest<T>(fn: () => Promise<T>): Promise<T> {
     try {
@@ -50,19 +48,17 @@ export class TeamController {
   @Post()
   async create(
     @Body() newTeamData: CreateTeamDTO,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.create(newTeamData, supabaseUser.sub)
+      this.teamService.create(newTeamData, supabaseUser.sub),
     );
   }
 
   @Post("autogenerate")
-  async autogenerateTeams(
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
-  ) {
+  async autogenerateTeams(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return this.handleRequest(() =>
-      this.teamService.autogenerateTeams(supabaseUser.sub)
+      this.teamService.autogenerateTeams(supabaseUser.sub),
     );
   }
 
@@ -70,10 +66,10 @@ export class TeamController {
   async update(
     @Param("id") id: string,
     @Body() updateTeamData: UpdateTeamDTO,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.update(id, updateTeamData, supabaseUser.sub)
+      this.teamService.update(id, updateTeamData, supabaseUser.sub),
     );
   }
 
@@ -81,10 +77,10 @@ export class TeamController {
   async updateStatus(
     @Param("id") id: string,
     @Body("status") status: TeamStatus,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.updateStatus(id, status, supabaseUser.sub)
+      this.teamService.updateStatus(id, status, supabaseUser.sub),
     );
   }
 
@@ -92,14 +88,14 @@ export class TeamController {
   async updateIgnoreConstraints(
     @Param("id") id: string,
     @Body("ignoreConstraints") ignoreConstraints: boolean,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
       this.teamService.updateIgnoreConstraints(
         id,
         ignoreConstraints,
-        supabaseUser.sub
-      )
+        supabaseUser.sub,
+      ),
     );
   }
 
@@ -107,10 +103,10 @@ export class TeamController {
   async assignUserToTeam(
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub)
+      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub),
     );
   }
 
@@ -118,10 +114,10 @@ export class TeamController {
   async withdrawUserFromTeam(
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub)
+      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub),
     );
   }
 
@@ -138,10 +134,10 @@ export class TeamController {
   @Delete(":id")
   async remove(
     @Param("id") id: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.remove(id, supabaseUser.sub)
+      this.teamService.remove(id, supabaseUser.sub),
     );
   }
 }

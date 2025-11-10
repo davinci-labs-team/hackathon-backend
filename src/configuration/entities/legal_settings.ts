@@ -1,5 +1,5 @@
-import { IsArray, ValidateNested, IsString, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsArray, ValidateNested, IsString, IsBoolean } from "class-validator";
+import { Type } from "class-transformer";
 
 export class Translation {
   @IsString()
