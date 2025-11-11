@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, PreconditionFailedException } from "@nestjs/common";
 import { SubmissionStatus } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UpdateSubmissionDto } from "./dto/update-submission.dto";
@@ -27,40 +27,55 @@ export class SubmissionService {
   }
 
   async getsubmissions(teamId: string) {
-    return this.prisma.submission.findMany({
+    const submission = await this.prisma.submission.findUnique({
       where: { teamId },
+      include: {
+        evaluations: true,
+        comments: true,
+      },
     });
+
+    if (!submission) {
+      throw new NotFoundException(`Submission for teamId ${teamId} not found`);
+    }
+    
+    return submission;
   }
 
   async getDueDate(): Promise<Date> {
     const hackathonConfig = await this.prisma.hackathonConfig.findFirst({
-      where: { key: "phases" },
+      where: { key: "PHASES" },
     });
-
     if (!hackathonConfig) {
-      throw new Error("Hackathon configuration not found");
+      throw new NotFoundException("Hackathon configuration not found");
     }
-
     const rawValue = hackathonConfig.value;
     let phases: Phase[];
-
+    
     if (typeof rawValue === "string") {
-      phases = JSON.parse(rawValue) as Phase[];
-    } else if (Array.isArray(rawValue)) {
-      phases = rawValue as Phase[];
+      const parsed = JSON.parse(rawValue);
+      // Handle nested structure with "phases" key
+      phases = parsed.phases || parsed;
+    } else if (typeof rawValue === "object" && rawValue !== null) {
+      // Handle object with "phases" key or direct array
+      phases = (rawValue as any).phases || (rawValue as Phase[]);
     } else {
-      throw new Error("Invalid format for hackathonConfig.value");
+      throw new PreconditionFailedException("Invalid format for hackathonConfig.value");
     }
-
+    
+    if (!Array.isArray(phases)) {
+      throw new PreconditionFailedException("Phases must be an array");
+    }
+    
     const phase3 = phases.find(phase => phase.order === 3);
-
     if (!phase3?.endDate) {
-      throw new Error("Phase 3 endDate not found");
+      throw new NotFoundException("Phase 3 endDate not found");
     }
-
+    
     const dueDate = new Date(phase3.endDate);
     return dueDate;
   }
+
 
   async updatesubmission(submission: UpdateSubmissionDto) {
     return this.prisma.submission.update({

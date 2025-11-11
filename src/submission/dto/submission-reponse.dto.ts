@@ -36,4 +36,9 @@ export class submissionReponseDto {
   @ApiProperty({ example: "team-123-documents.pdf" })
   @IsString()
   submissionFilePath?: string | null;
+
+  @ApiProperty({ example: "https://github.com/nom/repertoire" })
+  @IsString()
+  @IsOptional()
+  githubLink?: string | null;
 }

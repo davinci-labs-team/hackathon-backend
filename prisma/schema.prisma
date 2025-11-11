@@ -122,6 +122,7 @@ model Submission {
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   submissionFilePath String?      // File path du documents de soumission (.zip)
+  githubLink  String?             // Lien GitHub du projet soumis
 
   // Relations
   evaluations Evaluation[]        // évaluations des jurys
