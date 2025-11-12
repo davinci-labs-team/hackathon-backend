@@ -45,6 +45,11 @@ export class UserController {
     return this.userService.findOne(userId);
   }
 
+  @Get(":userId/expertTeams")
+  findExpertTeams(@Param("userId") userId: UUID) {
+    return this.userService.findExpertTeams(userId);
+  }
+
   @Patch(":userId")
   update(
     @Param("userId") userId: UUID,
