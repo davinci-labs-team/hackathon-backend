@@ -11,7 +11,7 @@ export class MediaSettings {
 
   @IsOptional()
   @IsString()
-  evaluationGridId: string | null;
+  evaluationGridPath: string | null;
 
   @IsOptional()
   @IsString()
