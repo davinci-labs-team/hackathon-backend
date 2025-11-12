@@ -66,6 +66,14 @@ export class S3BucketService {
     return filePath;
   }
 
+  async deleteFile(bucket: string, key: string): Promise<void> {
+    const { error } = await this.supabase.storage.from(bucket).remove([key]);
+
+    if (error) {
+      throw new NotFoundException(`Failed to delete file: ${error.message}`);
+    }
+  }
+
   private async isAnnouncementPublic(key: string): Promise<boolean> {
     const announcement = await this.prisma.announcement.findFirst({
       where: { files: { array_contains: [key] }, isPrivate: false },
