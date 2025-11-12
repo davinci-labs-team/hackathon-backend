@@ -1,23 +1,33 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { Role, TeamStatus, User } from "@prisma/client";
+import { HackathonConfigKey, Role, TeamStatus, User } from "@prisma/client";
 import { CreateTeamDTO } from "./dto/create-team.dto";
 import { UpdateTeamDTO } from "./dto/update-team.dto";
 import { TeamResponse } from "./dto/team-response";
 import { Theme } from "src/configuration/entities/theme-subject.entity";
+import { spawn } from "child_process";
+import { join } from "path";
+import * as path from "path";
+import { promises as fs } from "fs";
+import { MatchmakingTeam } from "./types/matchmaking-team.interface";
+import { ThemesSettings } from "src/configuration/entities/themes_settings";
 
-interface RawSubject {
+/*interface RawSubject {
   id: string;
   name: string;
   description: string;
-}
+}*/
 
-interface RawTheme {
+/*interface RawTheme {
   id: string;
   name: string;
   description: string;
   subjects: RawSubject[];
-}
+}*/
 
 @Injectable()
 export class TeamService {
@@ -31,11 +41,164 @@ export class TeamService {
     role: true,
   };
 
+  // ------------ AUTOGENERATE TEAMS ------------
+
+  getThemeId(themes: Theme[], subjectId: string): string {
+    for (const theme of themes) {
+      if (theme.subjects.some((s) => s.id === subjectId)) {
+        return theme.id;
+      }
+    }
+    throw new NotFoundException(
+      `No theme found for subject with id '${subjectId}'.`,
+    );
+  }
+
+  getSubjectName(themes: Theme[], subjectId: string): string {
+    for (const theme of themes) {
+      const subject = theme.subjects.find((s) => s.id === subjectId);
+      if (subject) {
+        return subject.name;
+      }
+    }
+    throw new NotFoundException(`No subject found with id '${subjectId}'.`);
+  }
+
+  async runMatchmakingScript(): Promise<MatchmakingTeam[]> {
+    const scriptPath = path.join(process.cwd(), "python", "matchmaking.py");
+
+    const pythonPath = path.join(process.cwd(), "venv", "bin", "python");
+
+    return new Promise<MatchmakingTeam[]>((resolve, reject) => {
+      const pythonProcess = spawn(pythonPath, [scriptPath]);
+
+      let dataString: string = "";
+      let errorString: string = "";
+
+      pythonProcess.stdout.on("data", (data: Buffer) => {
+        dataString += data.toString("utf-8");
+      });
+
+      pythonProcess.stderr.on("data", (data: Buffer) => {
+        errorString += data.toString("utf-8");
+      });
+
+      pythonProcess.on("close", (code: number | null) => {
+        if (code === 0) {
+          try {
+            const result: MatchmakingTeam[] = JSON.parse(
+              dataString,
+            ) as MatchmakingTeam[];
+            resolve(result);
+          } catch (err) {
+            reject(
+              new Error(
+                `Failed to parse matchmaking script output: ${String(err)}`,
+              ),
+            );
+          }
+        } else {
+          reject(
+            new Error(
+              `Matchmaking script exited with code ${code}: ${errorString}`,
+            ),
+          );
+        }
+      });
+    });
+  }
+
+  async saveTmpMatchmakingSettingsFile(): Promise<void> {
+    const config = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.MATCHMAKING },
+    });
+
+    const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
+    const filePath = join(tmpDir, "matchmaking_config.json");
+
+    // Create temp directory if it doesn't exist
+    await fs.mkdir(tmpDir, { recursive: true });
+
+    // Write config to file
+    await fs.writeFile(filePath, JSON.stringify(config?.value || {}), "utf-8");
+  }
+
+  async saveTmpUsersFile(usersJson: string): Promise<void> {
+    const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
+    const filePath = join(tmpDir, "users.json");
+
+    // Create temp directory if it doesn't exist
+    await fs.mkdir(tmpDir, { recursive: true });
+
+    // Write users to file
+    await fs.writeFile(filePath, usersJson, "utf-8");
+  }
+
+  async autogenerateTeams(supabaseUserId: string) {
+    await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
+    await this.saveTmpMatchmakingSettingsFile();
+
+    const themes = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.THEMES },
+    });
+    const subjectsIds = this.parseThemesSettings(
+      themes ? themes.value : [],
+    ).flatMap((t) => t.subjects.map((s) => s.id));
+
+    const usersBySubject = await Promise.all(
+      subjectsIds.map(async (subjectId) => {
+        const users = await this.prisma.user.findMany({
+          where: {
+            role: Role.PARTICIPANT,
+            favoriteSubjectId: subjectId,
+            teamId: null,
+          },
+          select: { id: true, school: true },
+        });
+        return { subjectId, users };
+      }),
+    );
+
+    for (const { subjectId, users } of usersBySubject) {
+      if (users.length === 0) continue;
+
+      await this.saveTmpUsersFile(JSON.stringify(users));
+
+      const themeSettings = this.parseThemesSettings(
+        themes ? themes.value : [],
+      );
+
+      const themeId = this.getThemeId(themeSettings, subjectId);
+      const subjectName = this.getSubjectName(themeSettings, subjectId);
+
+      const matchmakingTeams = await this.runMatchmakingScript();
+
+      // team name is Team_subjectName_index
+      for (let i = 0; i < matchmakingTeams.length; i++) {
+        const mmTeam = matchmakingTeams[i];
+        const teamName = `Team_${subjectName}_${i + 1}`;
+
+        const createTeamDTO: CreateTeamDTO = {
+          name: teamName,
+          description: `Auto-generated team for subject ${subjectId}`,
+          subjectId: subjectId,
+          themeId: themeId,
+          memberIds: mmTeam.members.map((m) => m.user_id),
+        };
+
+        await this.create(createTeamDTO, supabaseUserId);
+      }
+    }
+  }
+
   // ------------------ CRUD ------------------
 
   async create(newTeamData: CreateTeamDTO, supabaseUserId: string) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
-    await this.validateThemeAndSubject(newTeamData.themeId, newTeamData.subjectId);
+    await this.validateThemeAndSubject(
+      newTeamData.themeId,
+      newTeamData.subjectId,
+    );
 
     await Promise.all([
       this.validateUsersExist(newTeamData.memberIds || []),
@@ -50,13 +213,13 @@ export class TeamService {
         themeId: newTeamData.themeId,
         subjectId: newTeamData.subjectId,
         members: {
-          connect: newTeamData.memberIds?.map(id => ({ id })) || [],
+          connect: newTeamData.memberIds?.map((id) => ({ id })) || [],
         },
         juries: {
-          connect: newTeamData.juryIds?.map(id => ({ id })) || [],
+          connect: newTeamData.juryIds?.map((id) => ({ id })) || [],
         },
         mentors: {
-          connect: newTeamData.mentorIds?.map(id => ({ id })) || [],
+          connect: newTeamData.mentorIds?.map((id) => ({ id })) || [],
         },
       },
     });
@@ -64,12 +227,18 @@ export class TeamService {
     return { id: team.id };
   }
 
-  async update(id: string, updateTeamData: UpdateTeamDTO, supabaseUserId: string) {
+  async update(
+    id: string,
+    updateTeamData: UpdateTeamDTO,
+    supabaseUserId: string,
+  ) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
     if (updateTeamData.themeId && updateTeamData.subjectId) {
-      await this.validateThemeAndSubject(updateTeamData.themeId, updateTeamData.subjectId);
+      await this.validateThemeAndSubject(
+        updateTeamData.themeId,
+        updateTeamData.subjectId,
+      );
     }
-
     await Promise.all([
       this.validateUsersExist(updateTeamData.memberIds || []),
       this.validateUsersExist(updateTeamData.juryIds || []),
@@ -84,13 +253,13 @@ export class TeamService {
         themeId: updateTeamData.themeId,
         subjectId: updateTeamData.subjectId,
         members: updateTeamData.memberIds
-          ? { set: updateTeamData.memberIds.map(id => ({ id })) }
+          ? { set: updateTeamData.memberIds.map((id) => ({ id })) }
           : undefined,
         juries: updateTeamData.juryIds
-          ? { set: updateTeamData.juryIds.map(id => ({ id })) }
+          ? { set: updateTeamData.juryIds.map((id) => ({ id })) }
           : undefined,
         mentors: updateTeamData.mentorIds
-          ? { set: updateTeamData.mentorIds.map(id => ({ id })) }
+          ? { set: updateTeamData.mentorIds.map((id) => ({ id })) }
           : undefined,
       },
     });
@@ -109,7 +278,11 @@ export class TeamService {
     return { id: team.id };
   }
 
-  async updateIgnoreConstraints(id: string, ignoreConstraints: boolean, supabaseUserId: string) {
+  async updateIgnoreConstraints(
+    id: string,
+    ignoreConstraints: boolean,
+    supabaseUserId: string,
+  ) {
     await this.validateOrganizerAndTeam(id, supabaseUserId);
 
     const team = await this.prisma.team.update({
@@ -146,13 +319,17 @@ export class TeamService {
     return teams as TeamResponse[];
   }
 
-  async assignUserToTeam(teamId: string, userId: string, supabaseUserId: string) {
+  async assignUserToTeam(
+    teamId: string,
+    userId: string,
+    supabaseUserId: string,
+  ) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
 
     const user = await this.validateUserExists(userId);
     if (user.teamId) {
       throw new ForbiddenException(
-        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`
+        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`,
       );
     }
 
@@ -174,7 +351,11 @@ export class TeamService {
     return { id: team.id };
   }
 
-  async withdrawUserFromTeam(teamId: string, userId: string, supabaseUserId: string) {
+  async withdrawUserFromTeam(
+    teamId: string,
+    userId: string,
+    supabaseUserId: string,
+  ) {
     await this.validateOrganizerAndTeam(teamId, supabaseUserId);
 
     const user = await this.validateUserExists(userId);
@@ -192,7 +373,7 @@ export class TeamService {
       case Role.PARTICIPANT:
         if (user.teamId !== teamId) {
           throw new ForbiddenException(
-            `User with id '${user.id}' is not a member of team with id '${teamId}'.`
+            `User with id '${user.id}' is not a member of team with id '${teamId}'.`,
           );
         }
         relationKey = "members";
@@ -207,7 +388,9 @@ export class TeamService {
         break;
 
       default:
-        throw new ForbiddenException(`Cannot withdraw user with role '${user.role}' from a team.`);
+        throw new ForbiddenException(
+          `Cannot withdraw user with role '${user.role}' from a team.`,
+        );
     }
 
     const team = await this.prisma.team.update({
@@ -232,7 +415,8 @@ export class TeamService {
       where: { supabaseUserId },
     });
     if (!user) throw new NotFoundException("User not found.");
-    if (user.role !== role) throw new ForbiddenException("Only organizer can perform this action.");
+    if (user.role !== role)
+      throw new ForbiddenException("Only organizer can perform this action.");
     return user;
   }
 
@@ -243,15 +427,15 @@ export class TeamService {
   }
 
   private async validateUsersExist(userIds: string[]) {
-    if (!userIds.length) return;
+    if (!userIds.length || userIds.length === 0) return;
 
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true },
     });
 
-    const foundIds = users.map(u => u.id);
-    const missingIds = userIds.filter(id => !foundIds.includes(id));
+    const foundIds = users.map((u) => u.id);
+    const missingIds = userIds.filter((id) => !foundIds.includes(id));
     if (missingIds.length) {
       throw new NotFoundException(`Users not found: ${missingIds.join(", ")}`);
     }
@@ -259,90 +443,40 @@ export class TeamService {
 
   private async checkTeamExists(teamId: string) {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } });
-    if (!team) throw new NotFoundException(`Team with id '${teamId}' not found.`);
+    if (!team)
+      throw new NotFoundException(`Team with id '${teamId}' not found.`);
     return team;
   }
 
-  private async validateOrganizerAndTeam(teamId: string, supabaseUserId: string) {
+  private async validateOrganizerAndTeam(
+    teamId: string,
+    supabaseUserId: string,
+  ) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     return this.checkTeamExists(teamId);
   }
 
-  // TODO: Refacto to secure theme and subject validation when creating/updating a team
-  // Add these interfaces at the top of your file (or in a separate types file)
-
-  // Replace the parseThemes method with this type-safe version:
-  private parseThemes(value: unknown): Theme[] {
-    if (!Array.isArray(value)) return [];
-
-    return value.map((t: unknown) => {
-      // Type guard to ensure t is an object with the expected properties
-      if (!this.isRawTheme(t)) {
-        throw new Error("Invalid theme structure");
-      }
-
-      return {
-        id: t.id,
-        name: t.name,
-        description: t.description,
-        subjects: Array.isArray(t.subjects)
-          ? t.subjects.map((s: unknown) => {
-              if (!this.isRawSubject(s)) {
-                throw new Error("Invalid subject structure");
-              }
-              return {
-                id: s.id,
-                name: s.name,
-                description: s.description,
-              };
-            })
-          : [],
-      };
-    });
-  }
-
-  // Add these type guard methods
-  private isRawTheme(value: unknown): value is RawTheme {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "id" in value &&
-      typeof value.id === "string" &&
-      "name" in value &&
-      typeof value.name === "string" &&
-      "description" in value &&
-      typeof value.description === "string" &&
-      "subjects" in value
-    );
-  }
-
-  private isRawSubject(value: unknown): value is RawSubject {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "id" in value &&
-      typeof value.id === "string" &&
-      "name" in value &&
-      typeof value.name === "string" &&
-      "description" in value &&
-      typeof value.description === "string"
-    );
+  private parseThemesSettings(value: unknown): Theme[] {
+    if (!value || typeof value !== "object" || !("themes" in value)) return [];
+    const settings = value as ThemesSettings;
+    return settings.themes ?? [];
   }
 
   private async validateThemeAndSubject(themeId: string, subjectId: string) {
     const config = await this.prisma.hackathonConfig.findUnique({
-      where: { key: "THEMES" },
+      where: { key: HackathonConfigKey.THEMES },
     });
     if (!config) throw new NotFoundException("No themes configuration found.");
 
-    const themes = this.parseThemes(config.value);
-    const theme = themes.find(t => t.id === themeId);
-    if (!theme) throw new NotFoundException(`Theme with id '${themeId}' not found.`);
+    const themes = this.parseThemesSettings(config.value);
+    const theme = themes.find((t) => t.id === themeId);
+    if (!theme)
+      throw new NotFoundException(`Theme with id '${themeId}' not found.`);
 
-    const subject = theme.subjects.find(s => s.id === subjectId);
+    const subject = theme.subjects.find((s) => s.id === subjectId);
     if (!subject)
       throw new NotFoundException(
-        `Subject with id '${subjectId}' not found in theme '${themeId}'.`
+        `Subject with id '${subjectId}' not found in theme '${themeId}'.`,
       );
   }
 }

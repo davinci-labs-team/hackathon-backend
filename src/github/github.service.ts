@@ -39,7 +39,8 @@ export class GithubService {
         ? (JSON.parse(user.github) as GitHubData)
         : (user.github as GitHubData);
 
-    const userGithubToken = githubData.accessToken ?? githubData.token ?? githubData.access_token;
+    const userGithubToken =
+      githubData.accessToken ?? githubData.token ?? githubData.access_token;
 
     if (!userGithubToken) {
       throw new Error("GitHub access token not found on user.github");
@@ -60,7 +61,7 @@ export class GithubService {
           Authorization: `Bearer ${userGithubToken}`,
           Accept: "application/vnd.github+json",
         },
-      }
+      },
     );
 
     return res.data;

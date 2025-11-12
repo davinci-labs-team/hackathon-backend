@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from "@nestjs/common";
 import { FaqService } from "./faq.service";
 import { CreateFaqDto } from "./dto/create-faq.dto";
 import { UpdateFaqDto } from "./dto/update-faq.dto";
@@ -14,7 +22,7 @@ export class FaqController {
   @Post()
   async create(
     @Body() createFaqDto: CreateFaqDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.faqService.create(createFaqDto, supabaseUser.sub);
   }
@@ -34,13 +42,16 @@ export class FaqController {
   update(
     @Param("faqId") faqId: UUID,
     @Body() updateFaqDto: UpdateFaqDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.faqService.update(faqId, updateFaqDto, supabaseUser.sub);
   }
 
   @Delete(":faqId")
-  remove(@Param("faqId") faqId: UUID, @SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+  remove(
+    @Param("faqId") faqId: UUID,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+  ) {
     return this.faqService.remove(faqId, supabaseUser.sub);
   }
 }

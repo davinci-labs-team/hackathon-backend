@@ -48,37 +48,54 @@ export class TeamController {
   @Post()
   async create(
     @Body() newTeamData: CreateTeamDTO,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.handleRequest(() => this.teamService.create(newTeamData, supabaseUser.sub));
+    return this.handleRequest(() =>
+      this.teamService.create(newTeamData, supabaseUser.sub),
+    );
+  }
+
+  @Post("autogenerate")
+  async autogenerateTeams(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.handleRequest(() =>
+      this.teamService.autogenerateTeams(supabaseUser.sub),
+    );
   }
 
   @Put(":id")
   async update(
     @Param("id") id: string,
     @Body() updateTeamData: UpdateTeamDTO,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.handleRequest(() => this.teamService.update(id, updateTeamData, supabaseUser.sub));
+    return this.handleRequest(() =>
+      this.teamService.update(id, updateTeamData, supabaseUser.sub),
+    );
   }
 
   @Patch(":id/status")
   async updateStatus(
     @Param("id") id: string,
     @Body("status") status: TeamStatus,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.handleRequest(() => this.teamService.updateStatus(id, status, supabaseUser.sub));
+    return this.handleRequest(() =>
+      this.teamService.updateStatus(id, status, supabaseUser.sub),
+    );
   }
 
   @Patch(":id/ignore-constraints")
   async updateIgnoreConstraints(
     @Param("id") id: string,
     @Body("ignoreConstraints") ignoreConstraints: boolean,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.updateIgnoreConstraints(id, ignoreConstraints, supabaseUser.sub)
+      this.teamService.updateIgnoreConstraints(
+        id,
+        ignoreConstraints,
+        supabaseUser.sub,
+      ),
     );
   }
 
@@ -86,10 +103,10 @@ export class TeamController {
   async assignUserToTeam(
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub)
+      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub),
     );
   }
 
@@ -97,10 +114,10 @@ export class TeamController {
   async withdrawUserFromTeam(
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
     return this.handleRequest(() =>
-      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub)
+      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub),
     );
   }
 
@@ -115,7 +132,12 @@ export class TeamController {
   }
 
   @Delete(":id")
-  async remove(@Param("id") id: string, @SupabaseUser() supabaseUser: SupabaseDecodedUser) {
-    return this.handleRequest(() => this.teamService.remove(id, supabaseUser.sub));
+  async remove(
+    @Param("id") id: string,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+  ) {
+    return this.handleRequest(() =>
+      this.teamService.remove(id, supabaseUser.sub),
+    );
   }
 }

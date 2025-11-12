@@ -11,7 +11,7 @@ export class ExternalModuleController {
     try {
       // Typage explicite de la réponse Axios
       const response: AxiosResponse<FastAPIResponseDto> = await axios.get(
-        "http://127.0.0.1:8000/example"
+        "http://127.0.0.1:8000/example",
       );
 
       // ✅ Maintenant TypeScript sait que device_specs est une string

@@ -10,7 +10,7 @@ import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 export class AnnouncementService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly S3BucketService: S3BucketService
+    private readonly S3BucketService: S3BucketService,
   ) {}
 
   async create(createAnnouncementDto: CreateAnnouncementDto, user: User) {
@@ -50,7 +50,11 @@ export class AnnouncementService {
     });
   }
 
-  async update(id: string, updateAnnouncementDto: UpdateAnnouncementDto, user: User) {
+  async update(
+    id: string,
+    updateAnnouncementDto: UpdateAnnouncementDto,
+    user: User,
+  ) {
     const existingAnnouncement = await this.prisma.announcement.findUnique({
       where: { id },
     });

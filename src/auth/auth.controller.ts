@@ -26,7 +26,7 @@ export class AuthController {
     @Query("code") code: string,
     @Query("state") state: string,
     @Query("error") error: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     await this.handleOAuthCallback<DiscordApiUser>({
       provider: "discord",
@@ -34,12 +34,12 @@ export class AuthController {
       state,
       error,
       res,
-      getUser: c => this.authService.getDiscordUser(c),
+      getUser: (c) => this.authService.getDiscordUser(c),
       updateUser: (decoded, user) =>
         this.authService.updateUserWithDiscord(
           decoded.userId,
           decoded.supabaseUserId,
-          user as DiscordUser
+          user as DiscordUser,
         ),
     });
   }
@@ -53,7 +53,7 @@ export class AuthController {
     @Query("code") code: string,
     @Query("state") state: string,
     @Query("error") error: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     await this.handleOAuthCallback<GithubApiUser>({
       provider: "github",
@@ -61,9 +61,13 @@ export class AuthController {
       state,
       error,
       res,
-      getUser: c => this.authService.getGithubUser(c),
+      getUser: (c) => this.authService.getGithubUser(c),
       updateUser: (decoded, user) =>
-        this.authService.updateUserWithGithub(decoded.userId, decoded.supabaseUserId, user),
+        this.authService.updateUserWithGithub(
+          decoded.userId,
+          decoded.supabaseUserId,
+          user,
+        ),
     });
   }
 
@@ -99,7 +103,10 @@ export class AuthController {
 
     if (error === "access_denied") {
       res.redirect(
-        this.getRedirectUri(decoded?.organizerPlatform ?? false, `${provider}_cancelled`)
+        this.getRedirectUri(
+          decoded?.organizerPlatform ?? false,
+          `${provider}_cancelled`,
+        ),
       );
       return;
     }
@@ -117,7 +124,12 @@ export class AuthController {
       return;
     } catch (err) {
       console.error(`${provider} OAuth2 flow failed:`, err);
-      res.redirect(this.getRedirectUri(decoded?.organizerPlatform ?? false, `${provider}_error`));
+      res.redirect(
+        this.getRedirectUri(
+          decoded?.organizerPlatform ?? false,
+          `${provider}_error`,
+        ),
+      );
       return;
     }
   }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { CreateFaqDto } from "./dto/create-faq.dto";
 import { UpdateFaqDto } from "./dto/update-faq.dto";
 import { UUID } from "crypto";
@@ -10,7 +14,10 @@ import { Role } from "@prisma/client";
 export class FaqService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createFaqDto: CreateFaqDto, supabaseUserId: string): Promise<FaqResponse> {
+  async create(
+    createFaqDto: CreateFaqDto,
+    supabaseUserId: string,
+  ): Promise<FaqResponse> {
     await this.validateUserRole(supabaseUserId);
 
     return await this.prisma.faq.create({
@@ -38,7 +45,11 @@ export class FaqService {
     return faq;
   }
 
-  async update(id: UUID, updateFaqDto: UpdateFaqDto, supabaseUserId: string): Promise<FaqResponse> {
+  async update(
+    id: UUID,
+    updateFaqDto: UpdateFaqDto,
+    supabaseUserId: string,
+  ): Promise<FaqResponse> {
     await this.validateUserRole(supabaseUserId);
 
     // Check if the FAQ exists

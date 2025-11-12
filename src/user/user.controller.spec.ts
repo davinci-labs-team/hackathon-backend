@@ -88,21 +88,30 @@ describe("UserController", () => {
     it("should create a new user", async () => {
       mockUserService.create.mockResolvedValue(mockCreatedUser);
 
-      const result = await controller.create(mockCreateUserDto, mockSupabaseUser);
+      const result = await controller.create(
+        mockCreateUserDto,
+        mockSupabaseUser,
+      );
 
       expect(result).toEqual(mockCreatedUser);
-      expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUserDto, mockSupabaseUser.sub);
+      expect(mockUserService.create).toHaveBeenCalledWith(
+        mockCreateUserDto,
+        mockSupabaseUser.sub,
+      );
     });
 
     it("should handle service errors during user creation", async () => {
       const error = new Error("Creation failed");
       mockUserService.create.mockRejectedValue(error);
 
-      await expect(controller.create(mockCreateUserDto, mockSupabaseUser)).rejects.toThrow(
-        "Creation failed"
-      );
+      await expect(
+        controller.create(mockCreateUserDto, mockSupabaseUser),
+      ).rejects.toThrow("Creation failed");
 
-      expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUserDto, mockSupabaseUser.sub);
+      expect(mockUserService.create).toHaveBeenCalledWith(
+        mockCreateUserDto,
+        mockSupabaseUser.sub,
+      );
     });
   });
 
@@ -125,7 +134,9 @@ describe("UserController", () => {
       const error = new Error("Login failed");
       mockUserService.login.mockRejectedValue(error);
 
-      await expect(controller.login(mockSupabaseUser)).rejects.toThrow("Login failed");
+      await expect(controller.login(mockSupabaseUser)).rejects.toThrow(
+        "Login failed",
+      );
 
       expect(mockUserService.login).toHaveBeenCalledWith(mockSupabaseUser.sub);
     });
@@ -145,7 +156,9 @@ describe("UserController", () => {
       const error = new Error("Failed to fetch users");
       mockUserService.findAll.mockRejectedValue(error);
 
-      await expect(controller.findAll()).rejects.toThrow("Failed to fetch users");
+      await expect(controller.findAll()).rejects.toThrow(
+        "Failed to fetch users",
+      );
       expect(mockUserService.findAll).toHaveBeenCalledWith();
     });
   });
@@ -172,7 +185,9 @@ describe("UserController", () => {
       const error = new Error("User not found");
       mockUserService.findOne.mockRejectedValue(error);
 
-      await expect(controller.findOne(mockUserId)).rejects.toThrow("User not found");
+      await expect(controller.findOne(mockUserId)).rejects.toThrow(
+        "User not found",
+      );
 
       expect(mockUserService.findOne).toHaveBeenCalledWith(mockUserId);
     });
@@ -182,13 +197,17 @@ describe("UserController", () => {
     it("should update a user", async () => {
       mockUserService.update.mockResolvedValue(mockUpdatedUser);
 
-      const result = await controller.update(mockUserId, mockUpdateUserDto, mockSupabaseUser);
+      const result = await controller.update(
+        mockUserId,
+        mockUpdateUserDto,
+        mockSupabaseUser,
+      );
 
       expect(result).toEqual(mockUpdatedUser);
       expect(mockUserService.update).toHaveBeenCalledWith(
         mockUserId,
         mockUpdateUserDto,
-        mockSupabaseUser.sub
+        mockSupabaseUser.sub,
       );
     });
 
@@ -197,13 +216,13 @@ describe("UserController", () => {
       mockUserService.update.mockRejectedValue(error);
 
       await expect(
-        controller.update(mockUserId, mockUpdateUserDto, mockSupabaseUser)
+        controller.update(mockUserId, mockUpdateUserDto, mockSupabaseUser),
       ).rejects.toThrow("Update failed");
 
       expect(mockUserService.update).toHaveBeenCalledWith(
         mockUserId,
         mockUpdateUserDto,
-        mockSupabaseUser.sub
+        mockSupabaseUser.sub,
       );
     });
   });
@@ -219,18 +238,24 @@ describe("UserController", () => {
       const result = await controller.remove(mockUserId, mockSupabaseUser);
 
       expect(result).toEqual(deleteResult);
-      expect(mockUserService.remove).toHaveBeenCalledWith(mockUserId, mockSupabaseUser.sub);
+      expect(mockUserService.remove).toHaveBeenCalledWith(
+        mockUserId,
+        mockSupabaseUser.sub,
+      );
     });
 
     it("should handle removal errors", async () => {
       const error = new Error("Deletion failed");
       mockUserService.remove.mockRejectedValue(error);
 
-      await expect(controller.remove(mockUserId, mockSupabaseUser)).rejects.toThrow(
-        "Deletion failed"
-      );
+      await expect(
+        controller.remove(mockUserId, mockSupabaseUser),
+      ).rejects.toThrow("Deletion failed");
 
-      expect(mockUserService.remove).toHaveBeenCalledWith(mockUserId, mockSupabaseUser.sub);
+      expect(mockUserService.remove).toHaveBeenCalledWith(
+        mockUserId,
+        mockSupabaseUser.sub,
+      );
     });
   });
 });
