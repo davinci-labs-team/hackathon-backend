@@ -11,6 +11,10 @@ export class MediaSettings {
 
   @IsOptional()
   @IsString()
+  evaluationGridId: string | null;
+
+  @IsOptional()
+  @IsString()
   instagram: string | null;
 
   @IsOptional()
