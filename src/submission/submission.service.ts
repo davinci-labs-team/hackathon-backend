@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, PreconditionFailedException } from "@nestjs/common";
+import { Injectable, NotFoundException, PreconditionFailedException } from "@nestjs/common";
 import { SubmissionStatus } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UpdateSubmissionDto } from "./dto/update-submission.dto";
 import { EvaluateSubmissionDto } from "./dto/evaluate-submission.dto";
+import { CommentSubmissionDto } from "./dto/comment-submission.dto";
 
 // Define the Phase interface
 interface Phase {
@@ -123,5 +124,35 @@ export class SubmissionService {
         status: SubmissionStatus.GRADED,
       },
     });
+  }
+
+  async commentsubmission(comment: CommentSubmissionDto, supabaseUserId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with supabaseUserId ${supabaseUserId} not found`);
+    }
+
+    const userId = user.id;
+
+    await this.prisma.comment.create({
+      data: {
+        submissionId: comment.submissionId,
+        mentorId: userId,
+        content: comment.content,
+      },
+    });
+
+    const submission = await this.prisma.submission.findFirst({
+      where: { id: comment.submissionId },
+    });
+
+    if (!submission) {
+      throw new NotFoundException(`Submission with id ${comment.submissionId} not found`);
+    }
+
+    return submission;
   }
 }
