@@ -12,6 +12,7 @@ import { UserResponse } from "./dto/user-response";
 import { Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import { UserResponseReduced } from "./dto/user-response-reduced";
+import { ExpertTeamsResponse } from "./dto/expert-teams-response";
 
 @Injectable()
 export class UserService {
@@ -101,6 +102,34 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async findExpertTeams(id: UUID): Promise<ExpertTeamsResponse> {
+    const teams = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+      juryTeams: {
+        include: {
+        members: true,
+        juries: true,
+        mentors: true,
+        },
+      },
+      mentorTeams: {
+        include: {
+        members: true,
+        juries: true,
+        mentors: true,
+        },
+      },
+      },
+    });
+
+    if (!teams) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return teams;
   }
 
   async update(

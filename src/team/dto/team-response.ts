@@ -4,7 +4,7 @@ import { UserPreviewDTO } from "./user-preview.dto";
 export class TeamResponse {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   themeId: string;
   subjectId: string;
   status: TeamStatus;

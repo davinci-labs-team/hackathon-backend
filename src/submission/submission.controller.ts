@@ -6,6 +6,8 @@ import { EvaluateSubmissionDto } from "./dto/evaluate-submission.dto";
 import { submissionReponseDto } from "./dto/submission-reponse.dto";
 import { SupabaseDecodedUser } from "src/common/decorators/supabase-decoded-user.types";
 import { SupabaseUser } from "src/common/decorators/supabase-user.decorator";
+import { SubmissionDetailedResponseDto } from "./dto/submission-detailed-reponse.dto";
+import { CommentSubmissionDto } from "./dto/comment-submission.dto";
 
 @Controller("submission")
 export class SubmissionController {
@@ -19,9 +21,7 @@ export class SubmissionController {
   }
 
   @Get()
-  async find(
-    @Query() submission: CreateSubmissionDto,
-  ): Promise<submissionReponseDto[]> {
+  async find(@Query() submission: CreateSubmissionDto): Promise<SubmissionDetailedResponseDto> {
     return this.submissionService.getsubmissions(submission.teamId);
   }
 
@@ -46,5 +46,13 @@ export class SubmissionController {
       evaluation,
       supabaseUser.sub,
     );
+  }
+
+  @Post("comment")
+  async comment(
+    @Body() comment: CommentSubmissionDto,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+  ): Promise<submissionReponseDto> {
+    return this.submissionService.commentsubmission(comment, supabaseUser.sub);
   }
 }
