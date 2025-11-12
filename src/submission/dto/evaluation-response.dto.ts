@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsDate, IsNumber, IsOptional, IsString, IsUUID } from "class-validator";
+import {
+  IsDate,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from "class-validator";
 
 export class EvaluationResponseDTO {
   @ApiProperty({ example: "3fa85f64-5717-4562-b3fc-2c963f66afa6" })

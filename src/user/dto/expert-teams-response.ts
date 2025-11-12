@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { UserResponse } from "./user-response";
 import { TeamResponse } from "src/team/dto/team-response";
 
 export class ExpertTeamsResponse {

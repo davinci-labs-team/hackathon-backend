@@ -108,20 +108,20 @@ export class UserService {
     const teams = await this.prisma.user.findUnique({
       where: { id },
       select: {
-      juryTeams: {
-        include: {
-        members: true,
-        juries: true,
-        mentors: true,
+        juryTeams: {
+          include: {
+            members: true,
+            juries: true,
+            mentors: true,
+          },
         },
-      },
-      mentorTeams: {
-        include: {
-        members: true,
-        juries: true,
-        mentors: true,
+        mentorTeams: {
+          include: {
+            members: true,
+            juries: true,
+            mentors: true,
+          },
         },
-      },
       },
     });
 

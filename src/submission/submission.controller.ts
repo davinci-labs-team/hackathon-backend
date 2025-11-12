@@ -21,7 +21,9 @@ export class SubmissionController {
   }
 
   @Get()
-  async find(@Query() submission: CreateSubmissionDto): Promise<SubmissionDetailedResponseDto> {
+  async find(
+    @Query() submission: CreateSubmissionDto,
+  ): Promise<SubmissionDetailedResponseDto> {
     return this.submissionService.getsubmissions(submission.teamId);
   }
 
@@ -51,7 +53,7 @@ export class SubmissionController {
   @Post("comment")
   async comment(
     @Body() comment: CommentSubmissionDto,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<submissionReponseDto> {
     return this.submissionService.commentsubmission(comment, supabaseUser.sub);
   }
