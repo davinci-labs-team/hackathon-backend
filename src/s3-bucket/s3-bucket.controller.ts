@@ -18,7 +18,6 @@ import { FileUploadDto } from "./dto/file-upload.dto";
 export class S3BucketController {
   constructor(private readonly s3BucketService: S3BucketService) {}
 
-  @Public()
   @Get("download/:bucketName/:filePath")
   async getFileUrl(@Param("bucketName") bucketName: string, @Param("filePath") filePath: string): Promise<FileResponseDto> {
     const url = await this.s3BucketService.getFileUrl(bucketName, filePath);
@@ -26,6 +25,12 @@ export class S3BucketController {
   }
 
   @Public()
+  @Get("download/public/:bucketName/:filePath")
+  async getFileUrlPublic(@Param("bucketName") bucketName: string, @Param("filePath") filePath: string): Promise<FileResponseDto> {
+    const url = await this.s3BucketService.getFileUrlPublic(bucketName, filePath);
+    return { url };
+  }
+
   @Post("upload/:bucketName")
   @UseInterceptors(FileInterceptor("file"))
   @ApiConsumes("multipart/form-data")
