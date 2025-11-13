@@ -19,7 +19,7 @@ import { validateSync } from "class-validator";
 export class SubmissionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createsubmission(teamId: string) {
+  async createSubmission(teamId: string) {
     return this.prisma.submission.create({
       data: {
         teamId,
@@ -30,7 +30,7 @@ export class SubmissionService {
     });
   }
 
-  async getsubmissions(teamId: string) {
+  async getSubmissions(teamId: string) {
     const submission = await this.prisma.submission.findUnique({
       where: { teamId },
       include: {
@@ -44,6 +44,15 @@ export class SubmissionService {
     }
 
     return submission;
+  }
+
+  async getAllSubmissions() {
+    return this.prisma.submission.findMany({
+      include: {
+        evaluations: true,
+        comments: true,
+      },
+    });
   }
 
   async getDueDate(): Promise<Date> {
@@ -98,7 +107,7 @@ export class SubmissionService {
     return new Date(phase3.endDate);
   }
 
-  async updatesubmission(submission: UpdateSubmissionDto) {
+  async updateSubmission(submission: UpdateSubmissionDto) {
     return this.prisma.submission.update({
       where: { teamId: submission.teamId },
       data: {
@@ -108,7 +117,7 @@ export class SubmissionService {
     });
   }
 
-  async evaluatesubmission(
+  async evaluateSubmission(
     evaluation: EvaluateSubmissionDto,
     supabaseJuryId: string,
   ) {
@@ -154,7 +163,7 @@ export class SubmissionService {
     });
   }
 
-  async commentsubmission(
+  async commentSubmission(
     comment: CommentSubmissionDto,
     supabaseUserId: string,
   ) {
