@@ -18,6 +18,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { VisibilityTypeRequest } from "./dto/visibility-type-request.dto";
 import { VisibilityType } from "./enums/visibility-type.enum";
+import { Public } from "src/common/decorators/public.decorator";
 
 @ApiTags("announcements")
 @Controller("announcement")
@@ -50,6 +51,12 @@ export class AnnouncementController {
     return this.announcementService.getAll(
       query.visibilityType || VisibilityType.BOTH,
     );
+  }
+
+  @Get("public")
+  @Public()
+  async getAllPublic(): Promise<Announcement[]> {
+    return this.announcementService.getAll(VisibilityType.PUBLIC);
   }
 
   @Get(":id")
