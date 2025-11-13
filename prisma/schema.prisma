@@ -66,6 +66,7 @@ enum HackathonConfigKey {
   PARTNERS
   MATCHMAKING
   THEMES 
+  MAILING
 }
 
 model HackathonConfig {
