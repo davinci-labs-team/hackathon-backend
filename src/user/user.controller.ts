@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -14,10 +15,12 @@ import { UUID } from "crypto";
 import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { Public } from "../common/decorators/public.decorator";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { RequestPasswordResetDto } from "./dto/request-password-reset.dto";
 
 @Controller("user")
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
   async create(
@@ -30,6 +33,25 @@ export class UserController {
   @Post("login")
   async login(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return this.userService.login(supabaseUser.sub);
+  }
+
+  @Post("invite/:userId")
+  async invite(@Param("userId") userId: UUID, @SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.userService.invite(userId, supabaseUser.sub);
+  }
+
+  @Public()
+  @Post("requestPasswordReset")
+  async requestPasswordReset(@Body() requestPasswordReset: RequestPasswordResetDto) {
+    return this.userService.requestPasswordReset(requestPasswordReset.email);
+  }
+
+  @Public()
+  @Put("resetPassword")
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ) {
+    return this.userService.resetPassword(resetPasswordDto);
   }
 
   @Get()
