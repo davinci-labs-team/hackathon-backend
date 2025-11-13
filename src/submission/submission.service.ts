@@ -1,16 +1,19 @@
-import { Injectable, NotFoundException, PreconditionFailedException } from "@nestjs/common";
-import { SubmissionStatus } from "@prisma/client";
+import {
+  Injectable,
+  NotFoundException,
+  PreconditionFailedException,
+} from "@nestjs/common";
+import { HackathonConfigKey, SubmissionStatus } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UpdateSubmissionDto } from "./dto/update-submission.dto";
 import { EvaluateSubmissionDto } from "./dto/evaluate-submission.dto";
 import { CommentSubmissionDto } from "./dto/comment-submission.dto";
-
-// Define the Phase interface
-interface Phase {
-  order: number;
-  endDate: string;
-  [key: string]: unknown;
-}
+import {
+  PhaseSettings,
+  Phase,
+} from "src/configuration/entities/phase_settings";
+import { plainToInstance } from "class-transformer";
+import { validateSync } from "class-validator";
 
 @Injectable()
 export class SubmissionService {
@@ -39,44 +42,61 @@ export class SubmissionService {
     if (!submission) {
       throw new NotFoundException(`Submission for teamId ${teamId} not found`);
     }
-    
+
     return submission;
   }
 
   async getDueDate(): Promise<Date> {
     const hackathonConfig = await this.prisma.hackathonConfig.findFirst({
-      where: { key: "PHASES" },
+      where: { key: HackathonConfigKey.PHASES },
     });
+
     if (!hackathonConfig) {
       throw new NotFoundException("Hackathon configuration not found");
     }
-    const rawValue = hackathonConfig.value;
-    let phases: Phase[];
-    
+
+    let rawValue: unknown = hackathonConfig.value;
     if (typeof rawValue === "string") {
-      const parsed = JSON.parse(rawValue);
-      // Handle nested structure with "phases" key
-      phases = parsed.phases || parsed;
-    } else if (typeof rawValue === "object" && rawValue !== null) {
-      // Handle object with "phases" key or direct array
-      phases = (rawValue as any).phases || (rawValue as Phase[]);
+      try {
+        rawValue = JSON.parse(rawValue);
+      } catch {
+        throw new PreconditionFailedException(
+          "Invalid JSON format for hackathonConfig.value",
+        );
+      }
+    }
+
+    let normalizedValue: { phases: unknown };
+    if (
+      typeof rawValue === "object" &&
+      rawValue !== null &&
+      "phases" in (rawValue as Record<string, unknown>)
+    ) {
+      const maybePhases = (rawValue as Record<string, unknown>).phases;
+      normalizedValue = { phases: maybePhases };
+    } else if (Array.isArray(rawValue)) {
+      normalizedValue = { phases: rawValue };
     } else {
-      throw new PreconditionFailedException("Invalid format for hackathonConfig.value");
+      throw new PreconditionFailedException(
+        "Invalid format for hackathonConfig.value",
+      );
     }
-    
-    if (!Array.isArray(phases)) {
-      throw new PreconditionFailedException("Phases must be an array");
+
+    const phaseSettings = plainToInstance(PhaseSettings, normalizedValue);
+    const errors = validateSync(phaseSettings);
+    if (errors.length > 0) {
+      throw new PreconditionFailedException(
+        "Invalid PhaseSettings format: " + JSON.stringify(errors),
+      );
     }
-    
-    const phase3 = phases.find(phase => phase.order === 3);
+
+    const phase3 = phaseSettings.phases.find((p: Phase) => p.order === 3);
     if (!phase3?.endDate) {
       throw new NotFoundException("Phase 3 endDate not found");
     }
-    
-    const dueDate = new Date(phase3.endDate);
-    return dueDate;
-  }
 
+    return new Date(phase3.endDate);
+  }
 
   async updatesubmission(submission: UpdateSubmissionDto) {
     return this.prisma.submission.update({
@@ -134,13 +154,18 @@ export class SubmissionService {
     });
   }
 
-  async commentsubmission(comment: CommentSubmissionDto, supabaseUserId: string) {
+  async commentsubmission(
+    comment: CommentSubmissionDto,
+    supabaseUserId: string,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { supabaseUserId },
     });
 
     if (!user) {
-      throw new NotFoundException(`User with supabaseUserId ${supabaseUserId} not found`);
+      throw new NotFoundException(
+        `User with supabaseUserId ${supabaseUserId} not found`,
+      );
     }
 
     const userId = user.id;
@@ -158,7 +183,9 @@ export class SubmissionService {
     });
 
     if (!submission) {
-      throw new NotFoundException(`Submission with id ${comment.submissionId} not found`);
+      throw new NotFoundException(
+        `Submission with id ${comment.submissionId} not found`,
+      );
     }
 
     return submission;

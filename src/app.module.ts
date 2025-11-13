@@ -13,6 +13,7 @@ import { AuthModule } from "./auth/auth.module";
 import { SubmissionModule } from "./submission/submission.module";
 import { TeamModule } from "./team/team.module";
 import { GithubModule } from "./github/github.module";
+import { MailerModule } from "./mailer/mailer.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GithubModule } from "./github/github.module";
     SubmissionModule,
     TeamModule,
     GithubModule,
+    MailerModule,
   ],
   controllers: [ExternalModuleController],
   providers: [

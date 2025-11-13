@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { SubmissionStatus } from "@prisma/client";
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, IsNotEmpty, IsDate, IsArray, ValidateNested, IsNumber } from "class-validator";
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsNotEmpty,
+  IsDate,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+} from "class-validator";
 import { EvaluationResponseDTO } from "./evaluation-response.dto";
 import { CommentResponseDTO } from "./comment-response.dto";
 import { Type } from "class-transformer";
@@ -15,7 +25,10 @@ export class SubmissionDetailedResponseDto {
   @IsNotEmpty()
   teamId: string;
 
-  @ApiPropertyOptional({ example: 17.5, description: "Moyenne des notes des jurys" })
+  @ApiPropertyOptional({
+    example: 17.5,
+    description: "Moyenne des notes des jurys",
+  })
   @IsNumber()
   @IsOptional()
   grade?: number | null;

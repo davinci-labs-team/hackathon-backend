@@ -27,7 +27,10 @@ export class S3BucketController {
   ) {}
 
   @Get("download/:bucketName/:filePath")
-  async getFileUrl(@Param("bucketName") bucketName: string, @Param("filePath") filePath: string): Promise<FileResponseDto> {
+  async getFileUrl(
+    @Param("bucketName") bucketName: string,
+    @Param("filePath") filePath: string,
+  ): Promise<FileResponseDto> {
     const url = await this.s3BucketService.getFileUrl(bucketName, filePath);
     return { url };
   }
@@ -43,7 +46,10 @@ export class S3BucketController {
   @UseInterceptors(FileInterceptor("file"))
   @ApiConsumes("multipart/form-data")
   @ApiBody({ type: FileUploadDto })
-  async uploadFile(@Param("bucketName") bucketName: string, @UploadedFile() file: Express.Multer.File): Promise<UploadResponseDto> {
+  async uploadFile(
+    @Param("bucketName") bucketName: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UploadResponseDto> {
     const path = await this.s3BucketService.uploadFile(bucketName, file);
     return { path };
   }
