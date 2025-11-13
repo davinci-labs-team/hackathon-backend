@@ -13,7 +13,7 @@ import { Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import { UserResponseReduced } from "./dto/user-response-reduced";
 import { ExpertTeamsResponse } from "./dto/expert-teams-response";
-import { MailerService } from "src/mailer/mailer.service";
+import { MailerService } from "../mailer/mailer.service";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Injectable()
