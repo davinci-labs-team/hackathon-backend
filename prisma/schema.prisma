@@ -46,6 +46,8 @@ model User {
   juryTeams   Team[]  @relation("TeamJuries")
 
   mentorTeams Team[]  @relation("TeamMentors")
+
+  passwordReset PasswordReset?
 }
 
 model Faq {
@@ -168,4 +170,14 @@ enum SubmissionStatus {
   GRADED
   PENDING
   NOT_SUBMITTED
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id])
 }
