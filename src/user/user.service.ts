@@ -14,7 +14,6 @@ import { createClient } from "@supabase/supabase-js";
 import { UserResponseReduced } from "./dto/user-response-reduced";
 import { ExpertTeamsResponse } from "./dto/expert-teams-response";
 import { MailerService } from "src/mailer/mailer.service";
-import { use } from "passport";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Injectable()
@@ -24,7 +23,10 @@ export class UserService {
     process.env.SUPABASE_SERVICE_ROLE_KEY!, // ⚠️ côté serveur uniquement
   );
 
-  constructor(private readonly prisma: PrismaService, private readonly mailerService: MailerService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailerService: MailerService,
+  ) {}
 
   async create(
     createUserDto: CreateUserDto,
@@ -95,10 +97,11 @@ export class UserService {
 
     // Send invitation logic here
 
-    await this.mailerService.sendInviteEmail(user.email, 
+    await this.mailerService.sendInviteEmail(
+      user.email,
       user.firstname,
       `http://localhost:5173/first-login?email=${user.email}`,
-      "Qubit or not Qubit"
+      "Qubit or not Qubit",
     );
     return;
   }
@@ -137,17 +140,16 @@ export class UserService {
     // Here you would send the token to the user's email
     // For simplicity, we'll just log it
 
-    await this.mailerService.sendPasswordResetEmail(user.email, 
+    await this.mailerService.sendPasswordResetEmail(
+      user.email,
       user.firstname,
-      `http://localhost:5173/reset-password?token=${token}&email=${email}`
+      `http://localhost:5173/reset-password?token=${token}&email=${email}`,
     );
-    
+
     return;
   }
 
-  async resetPassword(
-    resetPasswordDto: ResetPasswordDto,
-  ): Promise<void> {
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
     // Check if the user exists
     const user = await this.prisma.user.findUnique({
       where: { email: resetPasswordDto.email },
@@ -188,8 +190,8 @@ export class UserService {
 
     const { error } = await this.supabaseAdmin.auth.admin.updateUserById(
       user.supabaseUserId,
-      { 
-        password: resetPasswordDto.newPassword
+      {
+        password: resetPasswordDto.newPassword,
       },
     );
 

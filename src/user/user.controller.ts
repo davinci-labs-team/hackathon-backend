@@ -20,7 +20,7 @@ import { RequestPasswordResetDto } from "./dto/request-password-reset.dto";
 
 @Controller("user")
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @Post()
   async create(
@@ -36,21 +36,24 @@ export class UserController {
   }
 
   @Post("invite/:userId")
-  async invite(@Param("userId") userId: UUID, @SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+  async invite(
+    @Param("userId") userId: UUID,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+  ) {
     return this.userService.invite(userId, supabaseUser.sub);
   }
 
   @Public()
   @Post("requestPasswordReset")
-  async requestPasswordReset(@Body() requestPasswordReset: RequestPasswordResetDto) {
+  async requestPasswordReset(
+    @Body() requestPasswordReset: RequestPasswordResetDto,
+  ) {
     return this.userService.requestPasswordReset(requestPasswordReset.email);
   }
 
   @Public()
   @Put("resetPassword")
-  async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
-  ) {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.userService.resetPassword(resetPasswordDto);
   }
 
