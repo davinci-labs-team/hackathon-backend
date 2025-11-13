@@ -17,14 +17,19 @@ export class SubmissionController {
   async create(
     @Body() submission: CreateSubmissionDto,
   ): Promise<submissionReponseDto> {
-    return this.submissionService.createsubmission(submission.teamId);
+    return this.submissionService.createSubmission(submission.teamId);
+  }
+
+  @Get()
+  async findAll(): Promise<SubmissionDetailedResponseDto[]> {
+    return this.submissionService.getAllSubmissions();
   }
 
   @Get()
   async find(
     @Query() submission: CreateSubmissionDto,
   ): Promise<SubmissionDetailedResponseDto> {
-    return this.submissionService.getsubmissions(submission.teamId);
+    return this.submissionService.getSubmissions(submission.teamId);
   }
 
   @Get("due-date")
@@ -36,7 +41,7 @@ export class SubmissionController {
   async update(
     @Body() submission: UpdateSubmissionDto,
   ): Promise<submissionReponseDto> {
-    return this.submissionService.updatesubmission(submission);
+    return this.submissionService.updateSubmission(submission);
   }
 
   @Post("evaluate")
@@ -44,7 +49,7 @@ export class SubmissionController {
     @Body() evaluation: EvaluateSubmissionDto,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<submissionReponseDto> {
-    return this.submissionService.evaluatesubmission(
+    return this.submissionService.evaluateSubmission(
       evaluation,
       supabaseUser.sub,
     );
@@ -55,6 +60,6 @@ export class SubmissionController {
     @Body() comment: CommentSubmissionDto,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<submissionReponseDto> {
-    return this.submissionService.commentsubmission(comment, supabaseUser.sub);
+    return this.submissionService.commentSubmission(comment, supabaseUser.sub);
   }
 }
