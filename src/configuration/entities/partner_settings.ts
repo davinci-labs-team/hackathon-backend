@@ -12,6 +12,9 @@ export class Partner {
   logoId: string;
 
   @IsString()
+  logoKey: string;
+
+  @IsString()
   websiteUrl: string;
 
   @IsBoolean()
