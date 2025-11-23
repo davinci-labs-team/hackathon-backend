@@ -30,7 +30,6 @@ export class S3BucketService {
   }
 
   async getFileUrlPublic(bucket: string, key: string): Promise<string> {
-    console.log(bucket, bucket === "public_files");
     if (bucket === "annonces" && (await this.isAnnouncementPublic(key))) {
       const { data, error } = await this.supabase.storage
         .from(bucket)
@@ -45,8 +44,6 @@ export class S3BucketService {
     }
     if (bucket === "public_files") {
       const { data } = this.supabase.storage.from(bucket).getPublicUrl(key);
-
-      console.log(data.publicUrl);
 
       return data.publicUrl;
     }
