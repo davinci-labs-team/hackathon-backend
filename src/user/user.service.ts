@@ -12,17 +12,26 @@ import { UserResponse } from "./dto/user-response";
 import { Role } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import { UserResponseReduced } from "./dto/user-response-reduced";
+import { ExpertTeamsResponse } from "./dto/expert-teams-response";
+import { MailerService } from "../mailer/mailer.service";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Injectable()
 export class UserService {
   private supabaseAdmin = createClient(
     process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // ⚠️ côté serveur uniquement
+    process.env.SUPABASE_SERVICE_ROLE_KEY!, // ⚠️ côté serveur uniquement
   );
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailerService: MailerService,
+  ) {}
 
-  async create(createUserDto: CreateUserDto, supabaseUserId: string): Promise<UserResponse> {
+  async create(
+    createUserDto: CreateUserDto,
+    supabaseUserId: string,
+  ): Promise<UserResponse> {
     const requestingUser = await this.prisma.user.findUnique({
       where: { supabaseUserId },
     });
@@ -34,11 +43,12 @@ export class UserService {
     }
 
     // Create user in supabase auth first
-    const { data: authUser, error: authError } = await this.supabaseAdmin.auth.admin.createUser({
-      email: createUserDto.email,
-      email_confirm: true,
-      password: Math.random().toString(36).slice(-8), // Generate a random password
-    });
+    const { data: authUser, error: authError } =
+      await this.supabaseAdmin.auth.admin.createUser({
+        email: createUserDto.email,
+        email_confirm: true,
+        password: Math.random().toString(36).slice(-8), // Generate a random password
+      });
 
     if (authError) {
       throw new ConflictException(`Supabase Auth Error: ${authError.message}`);
@@ -63,6 +73,135 @@ export class UserService {
       throw new NotFoundException("User not found.");
     }
     return user;
+  }
+
+  async invite(userId: UUID, supabaseUserId: string): Promise<void> {
+    // Check if the user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException("User not found.");
+    }
+
+    // Check if the requesting user has the right role
+    const requestingUser = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+    if (!requestingUser) {
+      throw new NotFoundException("You are not authenticated");
+    }
+    if (requestingUser.role !== Role.ORGANIZER) {
+      throw new ForbiddenException("You are not authorized to invite users.");
+    }
+
+    // Send invitation logic here
+
+    await this.mailerService.sendInviteEmail(
+      user.email,
+      user.firstname,
+      `http://localhost:5173/first-login?email=${user.email}`,
+      "Qubit or not Qubit",
+    );
+    return;
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException("User not found.");
+    }
+
+    const passwordReset = await this.prisma.passwordReset.findFirst({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    if (passwordReset) {
+      await this.prisma.passwordReset.delete({
+        where: { id: passwordReset.id },
+      });
+    }
+
+    const token = Math.random().toString(36).substring(2);
+    const expiresAt = new Date(Date.now() + 3600 * 1000);
+
+    await this.prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        token,
+        expiresAt,
+      },
+    });
+
+    // Here you would send the token to the user's email
+    // For simplicity, we'll just log it
+
+    await this.mailerService.sendPasswordResetEmail(
+      user.email,
+      user.firstname,
+      `http://localhost:5173/reset-password?token=${token}&email=${email}`,
+    );
+
+    return;
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
+    // Check if the user exists
+    const user = await this.prisma.user.findUnique({
+      where: { email: resetPasswordDto.email },
+    });
+    if (!user) {
+      throw new NotFoundException("User not found.");
+    }
+
+    const passwordReset = await this.prisma.passwordReset.findFirst({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    if (!passwordReset) {
+      throw new NotFoundException("Password reset request not found.");
+    }
+
+    if (passwordReset.token !== resetPasswordDto.token) {
+      if (passwordReset.expiresAt < new Date()) {
+        await this.prisma.passwordReset.delete({
+          where: { id: passwordReset.id },
+        });
+      }
+      throw new ForbiddenException("Invalid token.");
+    }
+
+    if (passwordReset.expiresAt < new Date()) {
+      await this.prisma.passwordReset.delete({
+        where: { id: passwordReset.id },
+      });
+      throw new ForbiddenException("Token has expired.");
+    }
+
+    await this.prisma.passwordReset.delete({
+      where: { id: passwordReset.id },
+    });
+
+    const { error } = await this.supabaseAdmin.auth.admin.updateUserById(
+      user.supabaseUserId,
+      {
+        password: resetPasswordDto.newPassword,
+      },
+    );
+
+    if (error) {
+      throw new ForbiddenException(
+        `Failed to reset password: ${error.message}`,
+      );
+    }
+
+    return;
   }
 
   async findAll(): Promise<UserResponse[]> {
@@ -99,10 +238,38 @@ export class UserService {
     return user;
   }
 
+  async findExpertTeams(id: UUID): Promise<ExpertTeamsResponse> {
+    const teams = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        juryTeams: {
+          include: {
+            members: true,
+            juries: true,
+            mentors: true,
+          },
+        },
+        mentorTeams: {
+          include: {
+            members: true,
+            juries: true,
+            mentors: true,
+          },
+        },
+      },
+    });
+
+    if (!teams) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return teams;
+  }
+
   async update(
     id: UUID,
     updateUserDto: UpdateUserDto,
-    supabaseUserId: string
+    supabaseUserId: string,
   ): Promise<UserResponse> {
     const user = await this.findOne(id);
 
@@ -126,16 +293,19 @@ export class UserService {
         throw new ConflictException("Email already in use");
       }
 
-      const { error: authError } = await this.supabaseAdmin.auth.admin.updateUserById(
-        user.supabaseUserId,
-        {
-          email: updateUserDto.email,
-          email_confirm: true,
-        }
-      );
+      const { error: authError } =
+        await this.supabaseAdmin.auth.admin.updateUserById(
+          user.supabaseUserId,
+          {
+            email: updateUserDto.email,
+            email_confirm: true,
+          },
+        );
 
       if (authError) {
-        throw new ConflictException(`Supabase Auth Error: ${authError.message}`);
+        throw new ConflictException(
+          `Supabase Auth Error: ${authError.message}`,
+        );
       }
     }
 

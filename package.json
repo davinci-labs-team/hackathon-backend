@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "prestart:dev": "bash ./scripts/setup-python.sh",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" --config ./config/.prettierrc",
     "start": "nest start",
@@ -35,6 +36,7 @@
     "axios": "^1.11.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "nestjs-mailgun": "^4.0.3",
     "nestjs-supabase-auth": "^1.0.9",
     "passport": "^0.7.0",
     "passport-discord-auth": "^1.2.0",

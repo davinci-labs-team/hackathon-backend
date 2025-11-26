@@ -1,5 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsString, ArrayNotEmpty, IsBoolean } from "class-validator";
+import {
+  IsArray,
+  IsNotEmpty,
+  IsString,
+  ArrayNotEmpty,
+  IsBoolean,
+} from "class-validator";
 
 export class CreateAnnouncementDto {
   @ApiProperty({

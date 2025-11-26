@@ -1,5 +1,11 @@
 export type JsonObject = { [key: string]: any };
-export type JsonType = string | number | boolean | null | JsonObject | JsonType[];
+export type JsonType =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonObject
+  | JsonType[];
 
 export class ConfigurationResponse {
   id: string;

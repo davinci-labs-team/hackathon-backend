@@ -3,8 +3,8 @@ set -e
 source .env
 
 # Configuration
-EMAIL="testUtilisateurLocalLeo@gmail.com"
-PASSWORD="super-secret-password"
+EMAIL="test-organizer@example.com"
+PASSWORD="password123"
 
 # Sign up the user
 echo "📨 Signing up user..."

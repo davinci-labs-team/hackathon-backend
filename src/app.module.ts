@@ -10,7 +10,10 @@ import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
 import { AuthModule } from "./auth/auth.module";
+import { SubmissionModule } from "./submission/submission.module";
 import { TeamModule } from "./team/team.module";
+import { GithubModule } from "./github/github.module";
+import { MailerModule } from "./mailer/mailer.module";
 
 @Module({
   imports: [
@@ -26,7 +29,10 @@ import { TeamModule } from "./team/team.module";
     FaqModule,
     ConfigurationModule,
     AuthModule,
+    SubmissionModule,
     TeamModule,
+    GithubModule,
+    MailerModule,
   ],
   controllers: [ExternalModuleController],
   providers: [

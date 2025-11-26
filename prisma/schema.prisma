@@ -46,6 +46,8 @@ model User {
   juryTeams   Team[]  @relation("TeamJuries")
 
   mentorTeams Team[]  @relation("TeamMentors")
+
+  passwordReset PasswordReset?
 }
 
 model Faq {
@@ -56,9 +58,20 @@ model Faq {
   createdAt DateTime @default(now())
 }
 
+enum HackathonConfigKey {
+  LEGAL
+  MEDIA
+  TEXTS
+  PHASES
+  PARTNERS
+  MATCHMAKING
+  THEMES 
+  MAILING
+}
+
 model HackathonConfig {
   id        String   @id @default(uuid())
-  key       String   @unique
+  key       HackathonConfigKey @unique
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,4 +125,60 @@ model Team {
 
   // N:N
   mentors     User[]     @relation("TeamMentors")
+}
+
+model Submission {
+  id          String              @id @default(uuid())
+  teamId      String              @unique
+  grade       Float?              // moyenne des notes des juries
+  status      SubmissionStatus    @default(NOT_SUBMITTED)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  submissionFilePath String?      // File path du documents de soumission (.zip)
+  githubLink  String?             // Lien GitHub du projet soumis
+
+  // Relations
+  evaluations Evaluation[]        // évaluations des jurys
+  comments    Comment[]           // commentaires des mentors
+}
+
+model Evaluation {
+  id            String      @id @default(uuid())
+  submissionId  String
+  juryId        String
+  grade         Float       // note donnée par un jury
+  comment       String?     // commentaire optionnel du jury
+  createdAt     DateTime    @default(now())
+
+  evaluationFilePath String? 
+
+  submission    Submission  @relation(fields: [submissionId], references: [id])
+
+  @@unique([submissionId, juryId])
+}
+
+model Comment {
+  id            String      @id @default(uuid())
+  submissionId  String
+  mentorId      String
+  content       String
+  createdAt     DateTime    @default(now())
+
+  submission    Submission  @relation(fields: [submissionId], references: [id])
+}
+
+enum SubmissionStatus {
+  GRADED
+  PENDING
+  NOT_SUBMITTED
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id])
 }

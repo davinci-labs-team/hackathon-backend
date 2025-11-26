@@ -4,6 +4,6 @@ export class UserPreviewDTO {
   id: string;
   firstname: string;
   lastname: string;
-  school: string;
+  school?: string | null;
   role: Role;
 }
