@@ -60,3 +60,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # temp python matchmaking files
 /python/tmp_matchmaking/
 /python/__pycache__/
+
+# python vrtual env
+venv/*
