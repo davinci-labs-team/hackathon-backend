@@ -8,9 +8,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class S3BucketService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   private supabase = createClient(
     process.env.SUPABASE_URL!,
@@ -32,13 +30,22 @@ export class S3BucketService {
   }
 
   async getFileUrlPublic(bucket: string, key: string): Promise<string> {
-    if (bucket === "public_files" || (bucket === "annonces" && await this.isAnnouncementPublic(key))) {
-      const { data, error } = await this.supabase.storage.from(bucket).createSignedUrl(key, 60 * 5); // expires in 5 minutes
-    if (error) {
-      throw new NotFoundException(`Failed to generate signed URL: ${error.message}`);
-    }
+    if (bucket === "annonces" && (await this.isAnnouncementPublic(key))) {
+      const { data, error } = await this.supabase.storage
+        .from(bucket)
+        .createSignedUrl(key, 60 * 5); // expires in 5 minutes
+      if (error) {
+        throw new NotFoundException(
+          `Failed to generate signed URL: ${error.message}`,
+        );
+      }
 
-    return data.signedUrl;
+      return data.signedUrl;
+    }
+    if (bucket === "public_files") {
+      const { data } = this.supabase.storage.from(bucket).getPublicUrl(key);
+
+      return data.publicUrl;
     }
     throw new NotFoundException("File is not public");
   }

@@ -37,8 +37,14 @@ export class S3BucketController {
 
   @Public()
   @Get("download/public/:bucketName/:filePath")
-  async getFileUrlPublic(@Param("bucketName") bucketName: string, @Param("filePath") filePath: string): Promise<FileResponseDto> {
-    const url = await this.s3BucketService.getFileUrlPublic(bucketName, filePath);
+  async getFileUrlPublic(
+    @Param("bucketName") bucketName: string,
+    @Param("filePath") filePath: string,
+  ): Promise<FileResponseDto> {
+    const url = await this.s3BucketService.getFileUrlPublic(
+      bucketName,
+      filePath,
+    );
     return { url };
   }
 
@@ -58,7 +64,7 @@ export class S3BucketController {
   async deleteFile(
     @Param("bucketName") bucketName: string,
     @Param("filePath") filePath: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<{ message: string }> {
     // check if user exists and have ORGANIZER role
     const user = await this.prisma.user.findUnique({
