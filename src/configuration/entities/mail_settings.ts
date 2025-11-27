@@ -1,11 +1,38 @@
-import { IsString, IsOptional } from "class-validator";
+import { IsString, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 
-export class MailSettings {
-  @IsOptional()
+export class EmailTemplate {
   @IsString()
-  invitEmailTemplate: string | null;
+  object: string;
 
-  @IsOptional()
   @IsString()
-  resetPasswordEmailTemplate: string | null;
+  title: string;
+
+  @IsString()
+  introParagraph: string;
+
+  @IsString()
+  actionPrompt: string;
+
+  @IsString()
+  buttonText: string;
+
+  @IsString()
+  closingNote: string;
+
+  @IsString()
+  signatureSalutation: string;
+
+  @IsString()
+  signatureName: string;
+}
+
+export class MailingSettings {
+  @ValidateNested()
+  @Type(() => EmailTemplate)
+  firstConnectionTemplate: EmailTemplate;
+
+  @ValidateNested()
+  @Type(() => EmailTemplate)
+  passwordResetTemplate: EmailTemplate;
 }
