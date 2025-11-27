@@ -5,10 +5,13 @@ import { UpdateConfigurationDTO } from "./dto/update-configuration.dto";
 import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 import { HackathonConfigKey } from "@prisma/client";
+import { Public } from "src/common/decorators/public.decorator";
+import { ConfigurationResponse } from "./dto/configuration-response";
+import { PublicConfigurationKey } from "./enums/configuration-key.enum";
 
 @Controller("configuration")
 export class ConfigurationController {
-  constructor(private readonly settingsService: ConfigurationService) {}
+  constructor(private readonly settingsService: ConfigurationService) { }
 
   @Post()
   async create(
@@ -34,5 +37,11 @@ export class ConfigurationController {
   @Get(":key")
   async findOne(@Param("key") key: HackathonConfigKey) {
     return this.settingsService.findOne(key);
+  }
+
+  @Public()
+  @Get("/:key/public")
+  async findOnePublic(@Param("key") key: PublicConfigurationKey): Promise<ConfigurationResponse> {
+    return this.settingsService.findOnePublic(key);
   }
 }
