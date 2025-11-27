@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -184,6 +185,10 @@ export class UserService {
       throw new ForbiddenException("Token has expired.");
     }
 
+    if (!this.isPasswordStrong(resetPasswordDto.newPassword)) {
+      throw new BadRequestException("New password is not strong enough.");
+    }
+
     await this.prisma.passwordReset.delete({
       where: { id: passwordReset.id },
     });
@@ -339,5 +344,10 @@ export class UserService {
     });
     await this.supabaseAdmin.auth.admin.deleteUser(user.supabaseUserId);
     return;
+  }
+
+  private isPasswordStrong(password: string) {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    return regex.test(password)
   }
 }
