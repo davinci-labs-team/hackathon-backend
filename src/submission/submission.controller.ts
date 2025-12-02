@@ -1,4 +1,4 @@
-import { Controller, Query, Post, Get, Body, Put } from "@nestjs/common";
+import { Controller, Post, Get, Body, Put, Param } from "@nestjs/common";
 import { SubmissionService } from "./submission.service";
 import { CreateSubmissionDto } from "./dto/create-submission.dto";
 import { UpdateSubmissionDto } from "./dto/update-submission.dto";
@@ -11,7 +11,7 @@ import { CommentSubmissionDto } from "./dto/comment-submission.dto";
 
 @Controller("submission")
 export class SubmissionController {
-  constructor(private readonly submissionService: SubmissionService) {}
+  constructor(private readonly submissionService: SubmissionService) { }
 
   @Post()
   async create(
@@ -25,11 +25,11 @@ export class SubmissionController {
     return this.submissionService.getAllSubmissions();
   }
 
-  @Get()
+  @Get(':teamId')
   async find(
-    @Query() submission: CreateSubmissionDto,
+    @Param('teamId') teamId: string,
   ): Promise<SubmissionDetailedResponseDto> {
-    return this.submissionService.getSubmissions(submission.teamId);
+    return this.submissionService.getSubmissions(teamId);
   }
 
   @Get("due-date")
