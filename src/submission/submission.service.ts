@@ -17,9 +17,25 @@ import { validateSync } from "class-validator";
 
 @Injectable()
 export class SubmissionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async createSubmission(teamId: string) {
+    const team = await this.prisma.team.findUnique({ where: { id: teamId } });
+
+    if (!team) {
+      throw new NotFoundException(`Team with id ${teamId} not found`);
+    }
+
+    const submission = await this.prisma.submission.findUnique({
+      where: { teamId },
+    });
+
+    if (submission) {
+      throw new PreconditionFailedException(
+        `Submission for teamId ${teamId} already exists`,
+      );
+    }
+
     return this.prisma.submission.create({
       data: {
         teamId,
@@ -28,6 +44,14 @@ export class SubmissionService {
         submissionFilePath: null,
       },
     });
+  }
+
+  async createAllSubmissions() {
+    const teams = await this.prisma.team.findMany();
+    const submissions = await Promise.all(
+      teams.map((team) => this.createSubmission(team.id)),
+    );
+    return submissions;
   }
 
   async getSubmissions(teamId: string) {
