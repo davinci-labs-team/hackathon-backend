@@ -11,12 +11,10 @@ import { Public } from "src/common/decorators/public.decorator";
 
 @Controller("submission")
 export class SubmissionController {
-  constructor(private readonly submissionService: SubmissionService) { }
+  constructor(private readonly submissionService: SubmissionService) {}
 
   @Post()
-  async create(
-    @Param('teamId') teamId: string,
-  ): Promise<submissionReponseDto> {
+  async create(@Param("teamId") teamId: string): Promise<submissionReponseDto> {
     return this.submissionService.createSubmission(teamId);
   }
 
@@ -31,9 +29,9 @@ export class SubmissionController {
     return this.submissionService.getAllSubmissions();
   }
 
-  @Get(':teamId')
+  @Get(":teamId")
   async find(
-    @Param('teamId') teamId: string,
+    @Param("teamId") teamId: string,
   ): Promise<SubmissionDetailedResponseDto> {
     return this.submissionService.getSubmissions(teamId);
   }

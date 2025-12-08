@@ -17,7 +17,7 @@ import { validateSync } from "class-validator";
 
 @Injectable()
 export class SubmissionService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async createSubmission(teamId: string) {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } });
