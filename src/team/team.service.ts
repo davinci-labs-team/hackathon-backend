@@ -138,6 +138,8 @@ export class TeamService {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     await this.saveTmpMatchmakingSettingsFile();
 
+    let numberOfTeamsCreated = 0;
+
     const themes = await this.prisma.hackathonConfig.findUnique({
       where: { key: HackathonConfigKey.THEMES },
     });
@@ -173,6 +175,8 @@ export class TeamService {
 
       const matchmakingTeams = await this.runMatchmakingScript();
 
+      numberOfTeamsCreated += matchmakingTeams.length;
+
       // team name is Team_subjectName_index
       for (let i = 0; i < matchmakingTeams.length; i++) {
         const mmTeam = matchmakingTeams[i];
@@ -188,6 +192,8 @@ export class TeamService {
 
         await this.create(createTeamDTO, supabaseUserId);
       }
+
+      return { count: numberOfTeamsCreated }
     }
   }
 
