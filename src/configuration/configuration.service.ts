@@ -18,7 +18,7 @@ import { PartnersSettings } from "./entities/partner_settings";
 import { MatchmakingSettings } from "./entities/matchmaking_settings";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
-import { MailSettings } from "./entities/mail_settings";
+import { MailingSettings } from "./entities/mail_settings";
 import { PublicConfigurationKey } from "./enums/configuration-key.enum";
 
 type ConfigSchemaClass<T = unknown> = new (...args: any[]) => T;
@@ -33,7 +33,7 @@ export class ConfigurationService {
     THEMES: ThemesSettings,
     PARTNERS: PartnersSettings,
     MATCHMAKING: MatchmakingSettings,
-    MAILING: MailSettings,
+    MAILING: MailingSettings,
   };
 
   constructor(private readonly prisma: PrismaService) {}
