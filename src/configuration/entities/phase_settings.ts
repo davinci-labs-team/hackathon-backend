@@ -22,7 +22,7 @@ export class Phase {
 
   @IsString()
   @IsNotEmpty()
-  status: 'NOT_STARTED' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED';
+  status: "NOT_STARTED" | "PENDING" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED";
 
   @IsOptional()
   @IsDateString()

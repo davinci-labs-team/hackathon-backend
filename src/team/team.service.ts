@@ -193,7 +193,7 @@ export class TeamService {
         await this.create(createTeamDTO, supabaseUserId);
       }
 
-      return { count: numberOfTeamsCreated }
+      return { count: numberOfTeamsCreated };
     }
   }
 

@@ -15,7 +15,10 @@ export class ConfigurationController {
     @Body() newConfigurationData: CreateConfigurationDTO,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.configurationService.create(newConfigurationData, supabaseUser.sub);
+    return this.configurationService.create(
+      newConfigurationData,
+      supabaseUser.sub,
+    );
   }
 
   @Patch(":key")
@@ -36,21 +39,17 @@ export class ConfigurationController {
     return this.configurationService.findOne(key);
   }
 
-  @Patch('/phase/skip')
-  async skipPhase(
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
-  ) {
+  @Patch("/phase/skip")
+  async skipPhase(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return this.configurationService.skipPhase(supabaseUser.sub);
   }
 
-  @Patch('/phase/begin')
-  async beginNextPhase(
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
-  ) {
+  @Patch("/phase/begin")
+  async beginNextPhase(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return this.configurationService.beginNextPhase(supabaseUser.sub);
   }
 
-  @Patch('/phase/complete')
+  @Patch("/phase/complete")
   async completeCurrentPhase(
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {

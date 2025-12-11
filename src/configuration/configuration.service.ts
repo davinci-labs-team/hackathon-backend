@@ -39,12 +39,12 @@ export class ConfigurationService {
 
   private async validateConfiguration(
     key: HackathonConfigKey,
-    value: unknown
+    value: unknown,
   ): Promise<void> {
     const schema = this.configSchemas[key];
     if (!schema) {
       throw new BadRequestException(
-        `No validation schema defined for key '${key}'`
+        `No validation schema defined for key '${key}'`,
       );
     }
 
@@ -67,7 +67,7 @@ export class ConfigurationService {
 
   async create(
     newConfigurationData: CreateConfigurationDTO,
-    supabaseUserId: string
+    supabaseUserId: string,
   ): Promise<ConfigurationResponse> {
     await this.validateUserRole(supabaseUserId);
 
@@ -76,13 +76,13 @@ export class ConfigurationService {
     });
     if (existingConfig) {
       throw new Error(
-        `Configuration with key '${newConfigurationData.key}' already exists.`
+        `Configuration with key '${newConfigurationData.key}' already exists.`,
       );
     }
 
     await this.validateConfiguration(
       newConfigurationData.key,
-      newConfigurationData.value
+      newConfigurationData.value,
     );
     return this.prisma.hackathonConfig.create({
       data: {
@@ -95,7 +95,7 @@ export class ConfigurationService {
   async update(
     key: HackathonConfigKey,
     updateConfigurationData: UpdateConfigurationDTO,
-    supabaseUserId: string
+    supabaseUserId: string,
   ): Promise<ConfigurationResponse> {
     await this.validateUserRole(supabaseUserId);
 
@@ -143,7 +143,7 @@ export class ConfigurationService {
    * @throws {BadRequestException} If the phases configuration data is corrupt or invalid.
    */
   private async getValidatedPhaseSettings(): Promise<PhaseSettings> {
-    let phasesConfig = await this.prisma.hackathonConfig.findUnique({
+    const phasesConfig = await this.prisma.hackathonConfig.findUnique({
       where: { key: HackathonConfigKey.PHASES },
     });
 
@@ -154,36 +154,36 @@ export class ConfigurationService {
     const rawPhaseData = phasesConfig.value;
     const phasesSettingsInstance = plainToInstance(
       PhaseSettings,
-      rawPhaseData as object
+      rawPhaseData as object,
     );
 
     try {
       await validateOrReject(phasesSettingsInstance);
     } catch (errors) {
-      // Loggez l'erreur pour le debug interne si nécessaire
       throw new BadRequestException(
-        "Phases configuration data is corrupt or invalid."
+        "Phases configuration data is corrupt or invalid: " +
+          JSON.stringify(errors),
       );
     }
 
-    return phasesSettingsInstance as PhaseSettings;
+    return phasesSettingsInstance;
   }
-  
+
   async skipPhase(supabaseUserId: string) {
     await this.validateUserRole(supabaseUserId);
     const phases = await this.getValidatedPhaseSettings();
 
     const inProgressPhase = phases.phases.find(
-      (phase) => phase.status === "IN_PROGRESS"
+      (phase) => phase.status === "IN_PROGRESS",
     );
     if (inProgressPhase) {
       throw new BadRequestException(
-        "Cannot skip phase while another phase is in progress."
+        "Cannot skip phase while another phase is in progress.",
       );
     }
 
     const pendingPhaseIndex = phases.phases.findIndex(
-      (phase) => phase.status === "PENDING"
+      (phase) => phase.status === "PENDING",
     );
     if (pendingPhaseIndex === -1) {
       throw new BadRequestException("No pending phase to skip.");
@@ -205,7 +205,7 @@ export class ConfigurationService {
     await this.update(
       HackathonConfigKey.PHASES,
       { value: phases },
-      supabaseUserId
+      supabaseUserId,
     );
   }
 
@@ -214,16 +214,16 @@ export class ConfigurationService {
     const phases = await this.getValidatedPhaseSettings();
 
     const inProgressPhase = phases.phases.find(
-      (phase) => phase.status === "IN_PROGRESS"
+      (phase) => phase.status === "IN_PROGRESS",
     );
     if (inProgressPhase) {
       throw new BadRequestException(
-        "Cannot begin a new phase while another phase is in progress."
+        "Cannot begin a new phase while another phase is in progress.",
       );
     }
 
     const pendingPhaseIndex = phases.phases.findIndex(
-      (phase) => phase.status === "PENDING"
+      (phase) => phase.status === "PENDING",
     );
     if (pendingPhaseIndex === -1) {
       throw new BadRequestException("No pending phase to begin.");
@@ -235,7 +235,7 @@ export class ConfigurationService {
     await this.update(
       HackathonConfigKey.PHASES,
       { value: phases },
-      supabaseUserId
+      supabaseUserId,
     );
   }
 
@@ -244,7 +244,7 @@ export class ConfigurationService {
     const phases = await this.getValidatedPhaseSettings();
 
     const inProgressPhaseIndex = phases.phases.findIndex(
-      (phase) => phase.status === "IN_PROGRESS"
+      (phase) => phase.status === "IN_PROGRESS",
     );
     if (inProgressPhaseIndex === -1) {
       throw new BadRequestException("No phase is currently in progress.");
@@ -261,7 +261,7 @@ export class ConfigurationService {
     await this.update(
       HackathonConfigKey.PHASES,
       { value: phases },
-      supabaseUserId
+      supabaseUserId,
     );
   }
 }
