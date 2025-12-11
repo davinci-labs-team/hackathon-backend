@@ -8,6 +8,9 @@ import { HackathonConfigKey } from "@prisma/client";
 @Injectable()
 export class MailerService {
   private readonly resend = new Resend(process.env.RESEND_API_KEY);
+  private readonly allowedEmails: string[] = process.env.ALLOWED_EMAILS
+    ? process.env.ALLOWED_EMAILS.split(",").map(email => email.trim())
+    : [];
 
   constructor(private readonly prisma: PrismaService) { }
 
@@ -46,6 +49,11 @@ export class MailerService {
     templateData: EmailTemplate,
     variables: Record<string, any>
   ) {
+    if (!this.isEmailAllowed(to)) {
+      console.warn(`Email to ${to} blocked by allowed emails configuration.`);
+      return;
+    }
+
     // load template file
     const file = loadTemplateFile(templateName);
 
@@ -59,5 +67,12 @@ export class MailerService {
       subject: templateData.object,
       html,
     });
+  }
+
+  private isEmailAllowed(email: string): boolean {
+    if (this.allowedEmails.length > 0 && this.allowedEmails[0] === "*") {
+      return true; // All emails are allowed
+    }
+    return this.allowedEmails.includes(email);
   }
 }
