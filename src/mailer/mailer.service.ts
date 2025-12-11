@@ -1,62 +1,63 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
-import { MailgunService } from "nestjs-mailgun";
+import { Injectable } from "@nestjs/common";
+import { Resend } from "resend";
+import { EmailTemplate, MailingSettings } from "src/configuration/entities/mail_settings";
+import { loadTemplateFile, renderTemplate } from "./template-builder.util";
+import { PrismaService } from "src/prisma/prisma.service";
+import { HackathonConfigKey } from "@prisma/client";
 
 @Injectable()
 export class MailerService {
-  private readonly domain = process.env.MAILGUN_DOMAIN || "";
+  private readonly resend = new Resend(process.env.RESEND_API_KEY);
 
-  constructor(private readonly mailgunService: MailgunService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async sendInviteEmail(
     to: string,
-    firstName: string,
     firstLoginUrl: string,
-    hackathonName: string,
   ) {
-    const subject = `Invitation au Hackathon ${hackathonName}`;
     const variables = {
-      firstName,
       firstLoginUrl,
-      hackathonName,
-      year: new Date().getFullYear(),
     };
-    return await this.sendMail(to, subject, "invite-first-login", variables);
+    const config = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.MAILING },
+    }).then((conf) => conf?.value as unknown as MailingSettings);
+
+    return await this.sendTemplateEmail(to, "invite-first-login", config.firstConnectionTemplate, variables);
   }
 
   async sendPasswordResetEmail(
     to: string,
-    firstName: string,
     resetPasswordUrl: string,
   ) {
-    const subject = `Réinitialisation de votre mot de passe`;
     const variables = {
-      firstName,
       resetPasswordUrl,
-      year: new Date().getFullYear(),
     };
-    return await this.sendMail(to, subject, "password-reset", variables);
+    const config = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.MAILING },
+    }).then((conf) => conf?.value as unknown as MailingSettings);
+
+    return await this.sendTemplateEmail(to, "password-reset",config.passwordResetTemplate, variables);
   }
 
-  async sendMail(
+
+  async sendTemplateEmail(
     to: string,
-    subject: string,
-    template: string,
-    variables: Record<string, any>,
+    templateName: string,
+    templateData: EmailTemplate,
+    variables: Record<string, any>
   ) {
-    const data = {
-      from: "Hackathon Team <" + process.env.MAILGUN_FROM + ">",
+    // load template file
+    const file = loadTemplateFile(templateName);
+
+    // merge template with data and variables
+    const html = renderTemplate(file, templateData, variables);
+
+    // send via Resend
+    return await this.resend.emails.send({
+      from: process.env.FROM_EMAIL!,
       to,
-      subject,
-      template,
-      "h:X-Mailgun-Variables": JSON.stringify(variables),
-    };
-    try {
-      const response = await this.mailgunService.createEmail(this.domain, data);
-      console.log("Mail envoyé ✅", response);
-      return response;
-    } catch (error) {
-      console.error("Erreur envoi mail ❌", error);
-      throw new ForbiddenException("Failed to send email");
-    }
+      subject: templateData.object,
+      html,
+    });
   }
 }
