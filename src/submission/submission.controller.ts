@@ -1,6 +1,5 @@
-import { Controller, Query, Post, Get, Body, Put } from "@nestjs/common";
+import { Controller, Post, Get, Body, Put, Param } from "@nestjs/common";
 import { SubmissionService } from "./submission.service";
-import { CreateSubmissionDto } from "./dto/create-submission.dto";
 import { UpdateSubmissionDto } from "./dto/update-submission.dto";
 import { EvaluateSubmissionDto } from "./dto/evaluate-submission.dto";
 import { submissionReponseDto } from "./dto/submission-reponse.dto";
@@ -8,16 +7,21 @@ import { SupabaseDecodedUser } from "src/common/decorators/supabase-decoded-user
 import { SupabaseUser } from "src/common/decorators/supabase-user.decorator";
 import { SubmissionDetailedResponseDto } from "./dto/submission-detailed-reponse.dto";
 import { CommentSubmissionDto } from "./dto/comment-submission.dto";
+import { Public } from "src/common/decorators/public.decorator";
 
 @Controller("submission")
 export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) {}
 
   @Post()
-  async create(
-    @Body() submission: CreateSubmissionDto,
-  ): Promise<submissionReponseDto> {
-    return this.submissionService.createSubmission(submission.teamId);
+  async create(@Param("teamId") teamId: string): Promise<submissionReponseDto> {
+    return this.submissionService.createSubmission(teamId);
+  }
+
+  @Post("createAll")
+  @Public()
+  async createAll(): Promise<submissionReponseDto[]> {
+    return this.submissionService.createAllSubmissions();
   }
 
   @Get()
@@ -25,11 +29,11 @@ export class SubmissionController {
     return this.submissionService.getAllSubmissions();
   }
 
-  @Get()
+  @Get(":teamId")
   async find(
-    @Query() submission: CreateSubmissionDto,
+    @Param("teamId") teamId: string,
   ): Promise<SubmissionDetailedResponseDto> {
-    return this.submissionService.getSubmissions(submission.teamId);
+    return this.submissionService.getSubmissions(teamId);
   }
 
   @Get("due-date")
