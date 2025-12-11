@@ -11,14 +11,17 @@ import { PublicConfigurationKey } from "./enums/configuration-key.enum";
 
 @Controller("configuration")
 export class ConfigurationController {
-  constructor(private readonly settingsService: ConfigurationService) { }
+  constructor(private readonly configurationService: ConfigurationService) {}
 
   @Post()
   async create(
     @Body() newConfigurationData: CreateConfigurationDTO,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.settingsService.create(newConfigurationData, supabaseUser.sub);
+    return this.configurationService.create(
+      newConfigurationData,
+      supabaseUser.sub,
+    );
   }
 
   @Patch(":key")
@@ -27,7 +30,7 @@ export class ConfigurationController {
     @Body() updateConfigurationData: UpdateConfigurationDTO,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    return this.settingsService.update(
+    return this.configurationService.update(
       key,
       updateConfigurationData,
       supabaseUser.sub,
@@ -36,12 +39,29 @@ export class ConfigurationController {
 
   @Get(":key")
   async findOne(@Param("key") key: HackathonConfigKey) {
-    return this.settingsService.findOne(key);
+    return this.configurationService.findOne(key);
+  }
+
+  @Patch("/phase/skip")
+  async skipPhase(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.configurationService.skipPhase(supabaseUser.sub);
+  }
+
+  @Patch("/phase/begin")
+  async beginNextPhase(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.configurationService.beginNextPhase(supabaseUser.sub);
+  }
+
+  @Patch("/phase/complete")
+  async completeCurrentPhase(
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+  ) {
+    return this.configurationService.completeCurrentPhase(supabaseUser.sub);
   }
 
   @Public()
   @Get("/:key/public")
   async findOnePublic(@Param("key") key: PublicConfigurationKey): Promise<ConfigurationResponse> {
-    return this.settingsService.findOnePublic(key);
+    return this.configurationService.findOnePublic(key);
   }
 }

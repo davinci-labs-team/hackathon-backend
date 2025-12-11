@@ -143,4 +143,135 @@ export class ConfigurationService {
       throw new ForbiddenException("Only organizer can create FAQs.");
     }
   }
+
+  /* ------ HACKATHON PHASES MANAGEMENT ------ */
+
+  /**
+   * Fetches and validates the current phase settings.
+   * @returns {Promise<PhaseSettings>} The validated phase settings.
+   * @throws {NotFoundException} If the phases configuration is not found.
+   * @throws {BadRequestException} If the phases configuration data is corrupt or invalid.
+   */
+  private async getValidatedPhaseSettings(): Promise<PhaseSettings> {
+    const phasesConfig = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.PHASES },
+    });
+
+    if (!phasesConfig) {
+      throw new NotFoundException("Phases configuration not found.");
+    }
+
+    const rawPhaseData = phasesConfig.value;
+    const phasesSettingsInstance = plainToInstance(
+      PhaseSettings,
+      rawPhaseData as object,
+    );
+
+    try {
+      await validateOrReject(phasesSettingsInstance);
+    } catch (errors) {
+      throw new BadRequestException(
+        "Phases configuration data is corrupt or invalid: " +
+          JSON.stringify(errors),
+      );
+    }
+
+    return phasesSettingsInstance;
+  }
+
+  async skipPhase(supabaseUserId: string) {
+    await this.validateUserRole(supabaseUserId);
+    const phases = await this.getValidatedPhaseSettings();
+
+    const inProgressPhase = phases.phases.find(
+      (phase) => phase.status === "IN_PROGRESS",
+    );
+    if (inProgressPhase) {
+      throw new BadRequestException(
+        "Cannot skip phase while another phase is in progress.",
+      );
+    }
+
+    const pendingPhaseIndex = phases.phases.findIndex(
+      (phase) => phase.status === "PENDING",
+    );
+    if (pendingPhaseIndex === -1) {
+      throw new BadRequestException("No pending phase to skip.");
+    }
+
+    const pendingPhase = phases.phases[pendingPhaseIndex];
+    if (!pendingPhase.optionalPhase) {
+      throw new BadRequestException("Cannot skip a non-optional phase.");
+    }
+
+    phases.phases[pendingPhaseIndex].status = "SKIPPED";
+    phases.phases[pendingPhaseIndex].startDate = new Date().toISOString();
+    phases.phases[pendingPhaseIndex].endDate = new Date().toISOString();
+
+    if (pendingPhaseIndex + 1 < phases.phases.length) {
+      phases.phases[pendingPhaseIndex + 1].status = "PENDING";
+    }
+
+    await this.update(
+      HackathonConfigKey.PHASES,
+      { value: phases },
+      supabaseUserId,
+    );
+  }
+
+  async beginNextPhase(supabaseUserId: string) {
+    await this.validateUserRole(supabaseUserId);
+    const phases = await this.getValidatedPhaseSettings();
+
+    const inProgressPhase = phases.phases.find(
+      (phase) => phase.status === "IN_PROGRESS",
+    );
+    if (inProgressPhase) {
+      throw new BadRequestException(
+        "Cannot begin a new phase while another phase is in progress.",
+      );
+    }
+
+    const pendingPhaseIndex = phases.phases.findIndex(
+      (phase) => phase.status === "PENDING",
+    );
+    if (pendingPhaseIndex === -1) {
+      throw new BadRequestException("No pending phase to begin.");
+    }
+
+    phases.phases[pendingPhaseIndex].status = "IN_PROGRESS";
+    phases.phases[pendingPhaseIndex].startDate = new Date().toISOString();
+
+    await this.update(
+      HackathonConfigKey.PHASES,
+      { value: phases },
+      supabaseUserId,
+    );
+  }
+
+  async completeCurrentPhase(supabaseUserId: string) {
+    await this.validateUserRole(supabaseUserId);
+    const phases = await this.getValidatedPhaseSettings();
+
+    const inProgressPhaseIndex = phases.phases.findIndex(
+      (phase) => phase.status === "IN_PROGRESS",
+    );
+    if (inProgressPhaseIndex === -1) {
+      throw new BadRequestException("No phase is currently in progress.");
+    }
+
+    phases.phases[inProgressPhaseIndex].status = "COMPLETED";
+    phases.phases[inProgressPhaseIndex].endDate = new Date().toISOString();
+
+    // Mettre à jour la prochaine phase à PENDING si elle existe
+    if (inProgressPhaseIndex + 1 < phases.phases.length) {
+      phases.phases[inProgressPhaseIndex + 1].status = "PENDING";
+    }
+
+    await this.update(
+      HackathonConfigKey.PHASES,
+      { value: phases },
+      supabaseUserId,
+    );
+  }
 }
