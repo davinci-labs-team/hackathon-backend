@@ -19,6 +19,7 @@ import { MatchmakingSettings } from "./entities/matchmaking_settings";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 import { MailingSettings } from "./entities/mail_settings";
+import { PublicConfigurationKey } from "./enums/configuration-key.enum";
 
 type ConfigSchemaClass<T = unknown> = new (...args: any[]) => T;
 
@@ -114,6 +115,15 @@ export class ConfigurationService {
   }
 
   async findOne(key: HackathonConfigKey): Promise<ConfigurationResponse> {
+    const config = await this.prisma.hackathonConfig.findUnique({
+      where: { key },
+    });
+    if (!config)
+      throw new NotFoundException(`Configuration with key '${key}' not found`);
+    return config;
+  }
+
+  async findOnePublic(key: PublicConfigurationKey): Promise<ConfigurationResponse> {
     const config = await this.prisma.hackathonConfig.findUnique({
       where: { key },
     });
