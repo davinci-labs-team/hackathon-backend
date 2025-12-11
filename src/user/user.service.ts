@@ -99,7 +99,7 @@ export class UserService {
 
     await this.mailerService.sendInviteEmail(
       user.email,
-      `http://localhost:5173/first-login?email=${user.email}`,
+      `${process.env.BASE_URL}/first-login?email=${user.email}`,
     );
     return;
   }
@@ -140,7 +140,7 @@ export class UserService {
 
     await this.mailerService.sendPasswordResetEmail(
       user.email,
-      `http://localhost:5173/reset-password?token=${token}&email=${email}`,
+      `${process.env.BASE_URL}/reset-password?token=${token}&email=${email}`,
     );
 
     return;
