@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Resend } from "resend";
-import { EmailTemplate, MailingSettings } from "src/configuration/entities/mail_settings";
+import { EmailTemplate, MailingSettings } from "../configuration/entities/mail_settings";
 import { loadTemplateFile, renderTemplate } from "./template-builder.util";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { HackathonConfigKey } from "@prisma/client";
 
 @Injectable()
