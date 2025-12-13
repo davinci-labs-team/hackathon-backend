@@ -116,10 +116,7 @@ export class TeamService {
     const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
     const filePath = join(tmpDir, "matchmaking_config.json");
 
-    // Create temp directory if it doesn't exist
     await fs.mkdir(tmpDir, { recursive: true });
-
-    // Write config to file
     await fs.writeFile(filePath, JSON.stringify(config?.value || {}), "utf-8");
   }
 
@@ -127,16 +124,60 @@ export class TeamService {
     const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
     const filePath = join(tmpDir, "users.json");
 
-    // Create temp directory if it doesn't exist
     await fs.mkdir(tmpDir, { recursive: true });
-
-    // Write users to file
     await fs.writeFile(filePath, usersJson, "utf-8");
+  }
+
+  private async assignRandomSubjectToUsersWithoutFavorite(): Promise<void> {
+    const themesConfig = await this.prisma.hackathonConfig.findUnique({
+      where: { key: HackathonConfigKey.THEMES },
+    });
+
+    if (!themesConfig) {
+      console.warn("No themes configuration found. Cannot assign random subjects.");
+      return;
+    }
+
+    const availableSubjects = this.parseThemesSettings(themesConfig.value)
+      .flatMap(theme => theme.subjects)
+      .map(subject => subject.id);
+
+    if (availableSubjects.length === 0) {
+      console.warn("No subjects available in themes configuration. Cannot assign random subjects.");
+      return;
+    }
+
+    const usersToUpdate = await this.prisma.user.findMany({
+      where: {
+        role: Role.PARTICIPANT,
+        favoriteSubjectId: null,
+        teamId: null,
+      },
+      select: { id: true },
+    });
+
+    if (usersToUpdate.length === 0) {
+      console.log("No participants found without a favorite subject to update.");
+      return;
+    }
+
+    const updateOperations = usersToUpdate.map(user => {
+      const randomIndex = Math.floor(Math.random() * availableSubjects.length);
+      const randomSubjectId = availableSubjects[randomIndex];
+
+      return this.prisma.user.update({
+        where: { id: user.id },
+        data: { favoriteSubjectId: randomSubjectId },
+      });
+    });
+
+    await this.prisma.$transaction(updateOperations);
   }
 
   async autogenerateTeams(supabaseUserId: string) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     await this.saveTmpMatchmakingSettingsFile();
+    await this.assignRandomSubjectToUsersWithoutFavorite();
 
     let numberOfTeamsCreated = 0;
 
@@ -146,6 +187,8 @@ export class TeamService {
     const subjectsIds = this.parseThemesSettings(
       themes ? themes.value : [],
     ).flatMap((t) => t.subjects.map((s) => s.id));
+
+
 
     const usersBySubject = await Promise.all(
       subjectsIds.map(async (subjectId) => {
@@ -177,7 +220,6 @@ export class TeamService {
 
       numberOfTeamsCreated += matchmakingTeams.length;
 
-      // team name is Team_subjectName_index
       for (let i = 0; i < matchmakingTeams.length; i++) {
         const mmTeam = matchmakingTeams[i];
         const teamName = `Team_${subjectName}_${i + 1}`;

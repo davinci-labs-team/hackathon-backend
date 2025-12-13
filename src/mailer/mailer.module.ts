@@ -7,7 +7,7 @@ import { MailgunModule } from "nestjs-mailgun";
   imports: [
     MailgunModule.forRoot({
       username: "api",
-      key: process.env.MAILGUN_API_KEY || "",
+      key: process.env.RESEND_API_KEY || "",
     }),
   ],
   providers: [MailerService],
