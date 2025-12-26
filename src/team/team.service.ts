@@ -242,7 +242,6 @@ export class TeamService {
   // ------------------ CRUD ------------------
 
   async create(newTeamData: CreateTeamDTO, supabaseUserId: string) {
-    await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
     await this.validateThemeAndSubject(
       newTeamData.themeId,
       newTeamData.subjectId,
@@ -280,7 +279,7 @@ export class TeamService {
     updateTeamData: UpdateTeamDTO,
     supabaseUserId: string,
   ) {
-    await this.validateOrganizerAndTeam(id, supabaseUserId);
+    await this.checkTeamExists(id);
     if (updateTeamData.themeId && updateTeamData.subjectId) {
       await this.validateThemeAndSubject(
         updateTeamData.themeId,
