@@ -9,6 +9,7 @@ import {
   Delete,
   HttpException,
   HttpStatus,
+  Query,
 } from "@nestjs/common";
 import { TeamService } from "./team.service";
 import { CreateTeamDTO } from "./dto/create-team.dto";
@@ -104,9 +105,11 @@ export class TeamController {
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+    @Query("participant") participant?: string,
   ) {
+    const isParticipant = participant === "true";
     return this.handleRequest(() =>
-      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub),
+      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub, isParticipant),
     );
   }
 
@@ -115,9 +118,12 @@ export class TeamController {
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+    @Query("participant") participant?: string,
   ) {
+
+    const isParticipant = participant === "true";
     return this.handleRequest(() =>
-      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub),
+      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub, isParticipant),
     );
   }
 
