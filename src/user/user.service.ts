@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -99,9 +100,7 @@ export class UserService {
 
     await this.mailerService.sendInviteEmail(
       user.email,
-      user.firstname,
-      `http://localhost:5173/first-login?email=${user.email}`,
-      "Qubit or not Qubit",
+      `${process.env.BASE_URL}/first-login?email=${user.email}`,
     );
     return;
   }
@@ -142,8 +141,7 @@ export class UserService {
 
     await this.mailerService.sendPasswordResetEmail(
       user.email,
-      user.firstname,
-      `http://localhost:5173/reset-password?token=${token}&email=${email}`,
+      `${process.env.BASE_URL}/reset-password?token=${token}&email=${email}`,
     );
 
     return;
@@ -182,6 +180,10 @@ export class UserService {
         where: { id: passwordReset.id },
       });
       throw new ForbiddenException("Token has expired.");
+    }
+
+    if (!this.isPasswordStrong(resetPasswordDto.newPassword)) {
+      throw new BadRequestException("New password is not strong enough.");
     }
 
     await this.prisma.passwordReset.delete({
@@ -339,5 +341,10 @@ export class UserService {
     });
     await this.supabaseAdmin.auth.admin.deleteUser(user.supabaseUserId);
     return;
+  }
+
+  private isPasswordStrong(password: string) {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    return regex.test(password)
   }
 }
