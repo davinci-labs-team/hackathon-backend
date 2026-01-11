@@ -7,7 +7,7 @@ import {
 import axios from "axios";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ConfigurationService } from "src/configuration/configuration.service";
-import { HackathonConfigKey, Role } from "@prisma/client";
+import { HackathonConfigKey, Role, SubmissionStatus } from "@prisma/client";
 
 // Define the possible shapes of GitHub data
 interface GitHubData {
@@ -162,6 +162,7 @@ export class GithubService {
       },
     });
 
+
     // 5. Loop through teams and create repos / add members
     const results: any[] = [];
 
@@ -192,6 +193,17 @@ export class GithubService {
           continue;
         }
       }
+
+      // Create or update Submission
+      await this.prismaService.submission.upsert({
+        where: { teamId: team.id },
+        update: { githubLink: repoUrl },
+        create: {
+          teamId: team.id,
+          githubLink: repoUrl,
+          status: SubmissionStatus.NOT_SUBMITTED,
+        },
+      });
 
       // Add Members, juries, mentors
       for (const member of team.members.concat(team.juries).concat(team.mentors)) {
