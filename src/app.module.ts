@@ -15,8 +15,11 @@ import { TeamModule } from "./team/team.module";
 import { GithubModule } from "./github/github.module";
 import { MailerModule } from "./mailer/mailer.module";
 
+import { PrometheusModule } from "@willsoto/nestjs-prometheus";
+
 @Module({
   imports: [
+    PrometheusModule.register(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
@@ -42,4 +45,4 @@ import { MailerModule } from "./mailer/mailer.module";
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

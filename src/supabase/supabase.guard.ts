@@ -17,6 +17,12 @@ export class SupabaseGuard extends AuthGuard("jwt") {
     if (isPublic) {
       return true;
     }
+
+    const request = context.switchToHttp().getRequest();
+    if (request.path === '/api/metrics') {
+      return true;
+    }
+
     return super.canActivate(context);
   }
 }
