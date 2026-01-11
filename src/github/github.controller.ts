@@ -5,10 +5,15 @@ import { GithubService } from "./github.service";
 
 @Controller("github")
 export class GithubController {
-  constructor(private readonly githubService: GithubService) {}
+  constructor(private readonly githubService: GithubService) { }
 
   @Post("/create-repo")
   create(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return this.githubService.createPrivateRepo(supabaseUser.sub);
+  }
+
+  @Post("/initialize-organization")
+  initialize(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.githubService.initializeHackathonOrg(supabaseUser.sub);
   }
 }

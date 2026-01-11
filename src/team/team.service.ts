@@ -357,6 +357,46 @@ export class TeamService {
     return { id: team.id };
   }
 
+  async leaveTeam(supabaseUserId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+
+    if (!user) throw new NotFoundException("User not found.");
+
+    if (!user.teamId) {
+      throw new ForbiddenException("You are not part of any team.");
+    }
+
+    return this.disconnectUserFromTeam(user.teamId, user);
+  }
+
+  async joinTeam(teamId: string, supabaseUserId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+
+    if (!user) throw new NotFoundException("User not found.");
+
+    if (user.role !== Role.PARTICIPANT) {
+      throw new ForbiddenException("Only participants can join teams.");
+    }
+
+    if (user.teamId) {
+      throw new ForbiddenException("You are already part of a team.");
+    }
+
+    await this.checkTeamExists(teamId);
+
+    // Add user to team
+    const team = await this.prisma.team.update({
+      where: { id: teamId },
+      data: { members: { connect: { id: user.id } } },
+    });
+
+    return { id: team.id };
+  }
+
   async withdrawUserFromTeam(
     teamId: string,
     userId: string,
