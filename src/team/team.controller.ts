@@ -109,7 +109,12 @@ export class TeamController {
   ) {
     const isParticipant = participant === "true";
     return this.handleRequest(() =>
-      this.teamService.assignUserToTeam(teamId, userId, supabaseUser.sub, isParticipant),
+      this.teamService.assignUserToTeam(
+        teamId,
+        userId,
+        supabaseUser.sub,
+        isParticipant,
+      ),
     );
   }
 
@@ -120,10 +125,14 @@ export class TeamController {
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
     @Query("participant") participant?: string,
   ) {
-
     const isParticipant = participant === "true";
     return this.handleRequest(() =>
-      this.teamService.withdrawUserFromTeam(teamId, userId, supabaseUser.sub, isParticipant),
+      this.teamService.withdrawUserFromTeam(
+        teamId,
+        userId,
+        supabaseUser.sub,
+        isParticipant,
+      ),
     );
   }
 

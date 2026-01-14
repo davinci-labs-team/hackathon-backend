@@ -61,7 +61,9 @@ export class ConfigurationController {
 
   @Public()
   @Get("/:key/public")
-  async findOnePublic(@Param("key") key: PublicConfigurationKey): Promise<ConfigurationResponse> {
+  async findOnePublic(
+    @Param("key") key: PublicConfigurationKey,
+  ): Promise<ConfigurationResponse> {
     return this.configurationService.findOnePublic(key);
   }
 }
