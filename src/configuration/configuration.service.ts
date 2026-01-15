@@ -123,7 +123,9 @@ export class ConfigurationService {
     return config;
   }
 
-  async findOnePublic(key: PublicConfigurationKey): Promise<ConfigurationResponse> {
+  async findOnePublic(
+    key: PublicConfigurationKey,
+  ): Promise<ConfigurationResponse> {
     const config = await this.prisma.hackathonConfig.findUnique({
       where: { key },
     });

@@ -10,7 +10,7 @@ export function loadTemplateFile(templateName: string): string {
 export function renderTemplate(
   html: string,
   template: EmailTemplate,
-  variables: Record<string, any>
+  variables: Record<string, any>,
 ) {
   // replace template fields
   for (const [key, value] of Object.entries(template)) {
