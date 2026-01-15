@@ -100,6 +100,23 @@ export class TeamController {
     );
   }
 
+  @Post("leave")
+  async leaveTeam(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.handleRequest(() =>
+      this.teamService.leaveTeam(supabaseUser.sub),
+    );
+  }
+
+  @Post(":teamId/join")
+  async joinTeam(
+    @Param("teamId") teamId: string,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
+  ) {
+    return this.handleRequest(() =>
+      this.teamService.joinTeam(teamId, supabaseUser.sub),
+    );
+  }
+
   @Post(":teamId/users/:userId")
   async assignUserToTeam(
     @Param("teamId") teamId: string,
