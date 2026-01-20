@@ -45,6 +45,19 @@ export class AnnouncementService {
   }
 
   async delete(id: string) {
+    const files = await this.prisma.announcement
+      .findUnique({
+        where: { id },
+        select: { files: true },
+      })
+      .then((announcement) => announcement?.files as string[]);
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        await this.S3BucketService.deleteFile("annonces", file);
+      }
+    }
+
     await this.prisma.announcement.delete({
       where: { id },
     });

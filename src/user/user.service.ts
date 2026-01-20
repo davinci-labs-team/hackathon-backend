@@ -16,6 +16,7 @@ import { UserResponseReduced } from "./dto/user-response-reduced";
 import { ExpertTeamsResponse } from "./dto/expert-teams-response";
 import { MailerService } from "../mailer/mailer.service";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { S3BucketService } from "../s3-bucket/s3-bucket.service";
 
 @Injectable()
 export class UserService {
@@ -27,6 +28,7 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailerService: MailerService,
+    private readonly S3BucketService: S3BucketService,
   ) {}
 
   async create(
@@ -207,7 +209,9 @@ export class UserService {
   }
 
   async findAll(): Promise<UserResponse[]> {
-    return await this.prisma.user.findMany({orderBy: [{firstname: 'asc'}, {lastname: 'asc'}, {email: 'asc'}]});
+    return await this.prisma.user.findMany({
+      orderBy: [{ firstname: "asc" }, { lastname: "asc" }, { email: "asc" }],
+    });
   }
 
   async findAllReduced(): Promise<UserResponseReduced[]> {
@@ -225,7 +229,7 @@ export class UserService {
         juryTeams: { select: { id: true, name: true } },
         mentorTeams: { select: { id: true, name: true } },
       },
-      orderBy: [{firstname: 'asc'}, {lastname: 'asc'}, {email: 'asc'}]
+      orderBy: [{ firstname: "asc" }, { lastname: "asc" }, { email: "asc" }],
     });
   }
 
@@ -312,10 +316,18 @@ export class UserService {
       }
     }
 
+    if (
+      user.profilePicturePath &&
+      updateUserDto.profilePicturePath !== user.profilePicturePath
+    ) {
+      await this.S3BucketService.deleteFile("users", user.profilePicturePath);
+    }
+
     return await this.prisma.user.update({
       where: { id },
       data: {
         ...updateUserDto,
+        profilePicturePath: updateUserDto.profilePicturePath ?? null,
         github: updateUserDto.github ?? undefined,
         discord: updateUserDto.discord ?? undefined,
       },
