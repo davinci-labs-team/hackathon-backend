@@ -16,19 +16,6 @@ import { promises as fs } from "fs";
 import { MatchmakingTeam } from "./types/matchmaking-team.interface";
 import { ThemesSettings } from "src/configuration/entities/themes_settings";
 
-/*interface RawSubject {
-  id: string;
-  name: string;
-  description: string;
-}*/
-
-/*interface RawTheme {
-  id: string;
-  name: string;
-  description: string;
-  subjects: RawSubject[];
-}*/
-
 @Injectable()
 export class TeamService {
   constructor(private readonly prisma: PrismaService) {}
