@@ -10,12 +10,18 @@ import { HackathonConfigKey } from "@prisma/client";
 
 @Injectable()
 export class MailerService {
-  private readonly resend = new Resend(process.env.RESEND_API_KEY);
-  private readonly allowedEmails: string[] = process.env.ALLOWED_EMAILS
-    ? process.env.ALLOWED_EMAILS.split(",").map((email) => email.trim())
-    : [];
+  private readonly resend: Resend;
+  private readonly allowedEmails: string[];
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {
+    this.resend = new Resend(process.env.RESEND_API_KEY);
+    const allowed = process.env.ALLOWED_EMAILS;
+    this.allowedEmails = allowed
+      ? allowed.split(",").map((email) => email.trim())
+      : [];
+  }
 
   async sendInviteEmail(to: string, firstLoginUrl: string) {
     const variables = {
@@ -64,19 +70,24 @@ export class MailerService {
       return;
     }
 
-    // load template file
-    const file = loadTemplateFile(templateName);
+    try {
+      // load template file
+      const file = loadTemplateFile(templateName);
 
-    // merge template with data and variables
-    const html = renderTemplate(file, templateData, variables);
+      // merge template with data and variables
+      const html = renderTemplate(file, templateData, variables);
 
-    // send via Resend
-    return await this.resend.emails.send({
-      from: process.env.FROM_EMAIL!,
-      to,
-      subject: templateData.object,
-      html,
-    });
+      // send via Resend
+      return await this.resend.emails.send({
+        from: process.env.FROM_EMAIL!,
+        to,
+        subject: templateData.object,
+        html,
+      });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      throw error;
+    }
   }
 
   private isEmailAllowed(email: string): boolean {

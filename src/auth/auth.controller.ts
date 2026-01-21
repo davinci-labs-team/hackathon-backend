@@ -15,7 +15,7 @@ type Provider = "discord" | "github";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // -----------------------------
   // DISCORD CALLBACK
@@ -136,8 +136,8 @@ export class AuthController {
 
   private getRedirectUri(organizerPlatform: boolean, error?: string): string {
     const base = organizerPlatform
-      ? "http://localhost:5173/organizer/profile"
-      : "http://localhost:5173/user/profile";
+      ? process.env.BASE_URL + "/organizer/profile"
+      : process.env.BASE_URL + "/user/profile";
 
     return error ? `${base}?error=${error}` : base;
   }
