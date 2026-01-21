@@ -27,11 +27,7 @@ export class MailerService {
     const variables = {
       firstLoginUrl,
     };
-    const config = await this.prisma.hackathonConfig
-      .findUnique({
-        where: { key: HackathonConfigKey.MAILING },
-      })
-      .then((conf) => conf?.value as unknown as MailingSettings);
+    const config = await this.getMailingConfig();
 
     return await this.sendTemplateEmail(
       to,
@@ -45,11 +41,7 @@ export class MailerService {
     const variables = {
       resetPasswordUrl,
     };
-    const config = await this.prisma.hackathonConfig
-      .findUnique({
-        where: { key: HackathonConfigKey.MAILING },
-      })
-      .then((conf) => conf?.value as unknown as MailingSettings);
+    const config = await this.getMailingConfig();
 
     return await this.sendTemplateEmail(
       to,
@@ -95,5 +87,46 @@ export class MailerService {
       return true; // All emails are allowed
     }
     return this.allowedEmails.includes(email);
+  }
+
+  private async getMailingConfig(): Promise<MailingSettings> {
+    const config = await this.prisma.hackathonConfig
+      .findUnique({
+        where: { key: HackathonConfigKey.MAILING },
+      })
+      .then((conf) => conf?.value as unknown as MailingSettings);
+
+    if (!config) {
+      return this.getDefaultMailingSettings();
+    }
+    return config;
+  }
+
+  private getDefaultMailingSettings(): MailingSettings {
+    return {
+      firstConnectionTemplate: {
+        object: "Welcome to {{hackathonName}}",
+        title: "Welcome!",
+        introParagraph: "You have been invited to join {{hackathonName}}.",
+        actionPrompt:
+          "Please click the button below to log in for the first time:",
+        buttonText: "Login",
+        closingNote:
+          "If you have any questions, please contact the organizers.",
+        signatureSalutation: "Best regards,",
+        signatureName: "{{hackathonName}} Team",
+      },
+      passwordResetTemplate: {
+        object: "Password Reset Request for {{hackathonName}}",
+        title: "Password Reset Request",
+        introParagraph: "We received a request to reset your password.",
+        actionPrompt: "Click the button below to reset your password:",
+        buttonText: "Reset My Password",
+        closingNote:
+          "If you did not request a password reset, please ignore this email or contact support if you have questions.",
+        signatureSalutation: "Best regards,",
+        signatureName: "{{hackathonName}} Team",
+      },
+    };
   }
 }
