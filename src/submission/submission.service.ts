@@ -78,7 +78,7 @@ export class SubmissionService {
       },
     });
   }
-
+  
   async getDueDate(): Promise<Date> {
     const hackathonConfig = await this.prisma.hackathonConfig.findFirst({
       where: { key: HackathonConfigKey.PHASES },
