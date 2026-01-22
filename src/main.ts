@@ -5,7 +5,7 @@ import { createApp } from "./app.factory";
 async function bootstrap() {
   const app = await createApp();
   app.enableCors({
-    origin: "http://localhost:5173",
+    origin: process.env.BASE_URL || "http://localhost:5173",
     credentials: true,
   });
   const port = process.env.PORT || 3000;

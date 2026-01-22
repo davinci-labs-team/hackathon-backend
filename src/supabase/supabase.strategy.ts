@@ -1,4 +1,5 @@
 import { ExtractJwt, Strategy } from "passport-jwt";
+import { passportJwtSecret } from "jwks-rsa";
 import { PassportStrategy } from "@nestjs/passport";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -12,7 +13,13 @@ export class SupabaseStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get("SUPABASE_JWT_SECRET") || "",
+      secretOrKeyProvider: passportJwtSecret({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 5,
+        jwksUri: `${configService.get<string>("SUPABASE_URL")}/auth/v1/.well-known/jwks.json`,
+      }),
+      algorithms: ["ES256"], // Allow both if needed: ['HS256', 'ES256']
     });
   }
 

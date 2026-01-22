@@ -10,22 +10,24 @@ import { HackathonConfigKey } from "@prisma/client";
 
 @Injectable()
 export class MailerService {
-  private readonly resend = new Resend(process.env.RESEND_API_KEY);
-  private readonly allowedEmails: string[] = process.env.ALLOWED_EMAILS
-    ? process.env.ALLOWED_EMAILS.split(",").map((email) => email.trim())
-    : [];
+  private readonly resend: Resend;
+  private readonly allowedEmails: string[];
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {
+    this.resend = new Resend(process.env.RESEND_API_KEY);
+    const allowed = process.env.ALLOWED_EMAILS;
+    this.allowedEmails = allowed
+      ? allowed.split(",").map((email) => email.trim())
+      : [];
+  }
 
   async sendInviteEmail(to: string, firstLoginUrl: string) {
     const variables = {
       firstLoginUrl,
     };
-    const config = await this.prisma.hackathonConfig
-      .findUnique({
-        where: { key: HackathonConfigKey.MAILING },
-      })
-      .then((conf) => conf?.value as unknown as MailingSettings);
+    const config = await this.getMailingConfig();
 
     return await this.sendTemplateEmail(
       to,
@@ -39,11 +41,7 @@ export class MailerService {
     const variables = {
       resetPasswordUrl,
     };
-    const config = await this.prisma.hackathonConfig
-      .findUnique({
-        where: { key: HackathonConfigKey.MAILING },
-      })
-      .then((conf) => conf?.value as unknown as MailingSettings);
+    const config = await this.getMailingConfig();
 
     return await this.sendTemplateEmail(
       to,
@@ -64,19 +62,24 @@ export class MailerService {
       return;
     }
 
-    // load template file
-    const file = loadTemplateFile(templateName);
+    try {
+      // load template file
+      const file = loadTemplateFile(templateName);
 
-    // merge template with data and variables
-    const html = renderTemplate(file, templateData, variables);
+      // merge template with data and variables
+      const html = renderTemplate(file, templateData, variables);
 
-    // send via Resend
-    return await this.resend.emails.send({
-      from: process.env.FROM_EMAIL!,
-      to,
-      subject: templateData.object,
-      html,
-    });
+      // send via Resend
+      return await this.resend.emails.send({
+        from: process.env.FROM_EMAIL!,
+        to,
+        subject: templateData.object,
+        html,
+      });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      throw error;
+    }
   }
 
   private isEmailAllowed(email: string): boolean {
@@ -84,5 +87,46 @@ export class MailerService {
       return true; // All emails are allowed
     }
     return this.allowedEmails.includes(email);
+  }
+
+  private async getMailingConfig(): Promise<MailingSettings> {
+    const config = await this.prisma.hackathonConfig
+      .findUnique({
+        where: { key: HackathonConfigKey.MAILING },
+      })
+      .then((conf) => conf?.value as unknown as MailingSettings);
+
+    if (!config) {
+      return this.getDefaultMailingSettings();
+    }
+    return config;
+  }
+
+  private getDefaultMailingSettings(): MailingSettings {
+    return {
+      firstConnectionTemplate: {
+        object: "Welcome to {{hackathonName}}",
+        title: "Welcome!",
+        introParagraph: "You have been invited to join {{hackathonName}}.",
+        actionPrompt:
+          "Please click the button below to log in for the first time:",
+        buttonText: "Login",
+        closingNote:
+          "If you have any questions, please contact the organizers.",
+        signatureSalutation: "Best regards,",
+        signatureName: "{{hackathonName}} Team",
+      },
+      passwordResetTemplate: {
+        object: "Password Reset Request for {{hackathonName}}",
+        title: "Password Reset Request",
+        introParagraph: "We received a request to reset your password.",
+        actionPrompt: "Click the button below to reset your password:",
+        buttonText: "Reset My Password",
+        closingNote:
+          "If you did not request a password reset, please ignore this email or contact support if you have questions.",
+        signatureSalutation: "Best regards,",
+        signatureName: "{{hackathonName}} Team",
+      },
+    };
   }
 }
