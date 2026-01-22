@@ -19,7 +19,7 @@ export class SupabaseGuard extends AuthGuard("jwt") {
     }
 
     const request = context.switchToHttp().getRequest();
-    if (request.path === '/api/metrics') {
+    if (request.path === "/api/metrics") {
       return true;
     }
 

@@ -5,7 +5,7 @@ import { GithubService } from "./github.service";
 
 @Controller("github")
 export class GithubController {
-  constructor(private readonly githubService: GithubService) { }
+  constructor(private readonly githubService: GithubService) {}
 
   @Post("/create-repo")
   create(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {

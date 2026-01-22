@@ -207,7 +207,9 @@ export class UserService {
   }
 
   async findAll(): Promise<UserResponse[]> {
-    return await this.prisma.user.findMany({orderBy: [{firstname: 'asc'}, {lastname: 'asc'}, {email: 'asc'}]});
+    return await this.prisma.user.findMany({
+      orderBy: [{ firstname: "asc" }, { lastname: "asc" }, { email: "asc" }],
+    });
   }
 
   async findAllReduced(): Promise<UserResponseReduced[]> {
@@ -225,7 +227,7 @@ export class UserService {
         juryTeams: { select: { id: true, name: true } },
         mentorTeams: { select: { id: true, name: true } },
       },
-      orderBy: [{firstname: 'asc'}, {lastname: 'asc'}, {email: 'asc'}]
+      orderBy: [{ firstname: "asc" }, { lastname: "asc" }, { email: "asc" }],
     });
   }
 
