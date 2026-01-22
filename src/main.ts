@@ -1,4 +1,4 @@
-import './otel';
+import "./otel";
 import { Logger } from "@nestjs/common";
 import { createApp } from "./app.factory";
 

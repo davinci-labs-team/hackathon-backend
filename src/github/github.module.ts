@@ -8,4 +8,4 @@ import { ConfigurationModule } from "src/configuration/configuration.module";
   controllers: [GithubController],
   providers: [GithubService],
 })
-export class GithubModule { }
+export class GithubModule {}

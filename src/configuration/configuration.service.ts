@@ -20,6 +20,7 @@ import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 import { MailingSettings } from "./entities/mail_settings";
 import { PublicConfigurationKey } from "./enums/configuration-key.enum";
+import { DEFAULT_HACKATHON_PHASES } from "./constants/default-phases.constant";
 
 type ConfigSchemaClass<T = unknown> = new (...args: any[]) => T;
 
@@ -265,7 +266,7 @@ export class ConfigurationService {
     phases.phases[inProgressPhaseIndex].status = "COMPLETED";
     phases.phases[inProgressPhaseIndex].endDate = new Date().toISOString();
 
-    // Mettre à jour la prochaine phase à PENDING si elle existe
+    // Update the next phase to PENDING if it exists
     if (inProgressPhaseIndex + 1 < phases.phases.length) {
       phases.phases[inProgressPhaseIndex + 1].status = "PENDING";
     }
@@ -273,6 +274,30 @@ export class ConfigurationService {
     await this.update(
       HackathonConfigKey.PHASES,
       { value: phases },
+      supabaseUserId,
+    );
+  }
+
+  async resetPhases(supabaseUserId: string) {
+    await this.validateUserRole(supabaseUserId);
+
+    const currentSettings = await this.getValidatedPhaseSettings();
+
+    const resetPhases = DEFAULT_HACKATHON_PHASES.map((defaultPhase) => {
+      if (defaultPhase.order === 4) {
+        const existingPhase4 = currentSettings.phases.find(
+          (p) => p.order === 4,
+        );
+        if (existingPhase4?.endDate) {
+          return { ...defaultPhase, endDate: existingPhase4.endDate };
+        }
+      }
+      return defaultPhase;
+    });
+
+    return this.update(
+      HackathonConfigKey.PHASES,
+      { value: { phases: resetPhases } },
       supabaseUserId,
     );
   }

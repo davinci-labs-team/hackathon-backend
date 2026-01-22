@@ -11,7 +11,12 @@ export class TextsSettings {
   @IsString()
   hackathonDescription: string;
 
-  @IsOptional()
   @IsString()
-  location?: string;
+  location: string;
+
+  @IsString()
+  startDate: string;
+
+  @IsString()
+  endDate: string;
 }
