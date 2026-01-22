@@ -1,4 +1,5 @@
 import json
+import sys
 from matchmaking_settings import MatchmakingSettings
 from ortools.sat.python import cp_model
 from pathlib import Path
@@ -10,7 +11,7 @@ class User:
 
 TMP_DIR = Path(__file__).parent / 'tmp_matchmaking'
 
-def load_users(path: Path = TMP_DIR / 'users.json'):
+'''def load_users(path: Path = TMP_DIR / 'users.json'):
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return [User(u['id'], u['school']) for u in data]
@@ -19,11 +20,25 @@ def load_users(path: Path = TMP_DIR / 'users.json'):
 def load_settings(path: Path = TMP_DIR / 'matchmaking_config.json'):
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
+    return MatchmakingSettings.model_validate(data)'''
+
+def load_users(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return [User(u['id'], u['school']) for u in data]
+
+def load_settings(config_path):
+    with open(config_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
     return MatchmakingSettings.model_validate(data)
 
-def run_matchmaking():
-    users = load_users()
+def run_matchmaking(users_file, config_file):
+    '''users = load_users()
     settings = load_settings()
+'''
+    # CHANGED
+    users = load_users(users_file)
+    settings = load_settings(config_file)
 
     model = cp_model.CpModel()
     num_users = len(users)
@@ -139,4 +154,6 @@ def run_matchmaking():
 
 
 if __name__ == "__main__":
-    run_matchmaking()
+    #run_matchmaking()
+    if len(sys.argv) > 2:
+        run_matchmaking(sys.argv[1], sys.argv[2])

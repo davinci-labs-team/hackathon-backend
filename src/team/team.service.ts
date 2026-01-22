@@ -37,7 +37,7 @@ export class TeamService {
       }
     }
     throw new NotFoundException(
-      `No theme found for subject with id '${subjectId}'.`,
+      `No theme found for subject with id '${subjectId}'.`
     );
   }
 
@@ -51,13 +51,20 @@ export class TeamService {
     throw new NotFoundException(`No subject found with id '${subjectId}'.`);
   }
 
-  async runMatchmakingScript(): Promise<MatchmakingTeam[]> {
+  async runMatchmakingScript(
+    usersPath: string,
+    configPath: string
+  ): Promise<MatchmakingTeam[]> {
     const scriptPath = path.join(process.cwd(), "python", "matchmaking.py");
-
     const pythonPath = path.join(process.cwd(), "venv", "bin", "python");
 
     return new Promise<MatchmakingTeam[]>((resolve, reject) => {
-      const pythonProcess = spawn(pythonPath, [scriptPath]);
+      const pythonProcess = spawn(pythonPath, [
+        scriptPath,
+        usersPath,
+        configPath,
+      ]);
+      //const pythonProcess = spawn(pythonPath, [scriptPath]);
 
       let dataString: string = "";
       let errorString: string = "";
@@ -74,28 +81,28 @@ export class TeamService {
         if (code === 0) {
           try {
             const result: MatchmakingTeam[] = JSON.parse(
-              dataString,
+              dataString
             ) as MatchmakingTeam[];
             resolve(result);
           } catch (err) {
             reject(
               new Error(
-                `Failed to parse matchmaking script output: ${String(err)}`,
-              ),
+                `Failed to parse matchmaking script output: ${String(err)}`
+              )
             );
           }
         } else {
           reject(
             new Error(
-              `Matchmaking script exited with code ${code}: ${errorString}`,
-            ),
+              `Matchmaking script exited with code ${code}: ${errorString}`
+            )
           );
         }
       });
     });
   }
 
-  async saveTmpMatchmakingSettingsFile(): Promise<void> {
+  async saveTmpMatchmakingSettingsFile(): Promise<string> {
     const config = await this.prisma.hackathonConfig.findUnique({
       where: { key: HackathonConfigKey.MATCHMAKING },
     });
@@ -105,114 +112,73 @@ export class TeamService {
 
     await fs.mkdir(tmpDir, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(config?.value || {}), "utf-8");
+    return filePath;
   }
 
-  async saveTmpUsersFile(usersJson: string): Promise<void> {
+  async saveTmpUsersFile(usersJson: string, filename: string): Promise<string> {
     const tmpDir = join(process.cwd(), "python", "tmp_matchmaking");
-    const filePath = join(tmpDir, "users.json");
+    const filePath = join(tmpDir, filename);
 
     await fs.mkdir(tmpDir, { recursive: true });
     await fs.writeFile(filePath, usersJson, "utf-8");
-  }
-
-  private async assignRandomSubjectToUsersWithoutFavorite(): Promise<void> {
-    const themesConfig = await this.prisma.hackathonConfig.findUnique({
-      where: { key: HackathonConfigKey.THEMES },
-    });
-
-    if (!themesConfig) {
-      console.warn(
-        "No themes configuration found. Cannot assign random subjects.",
-      );
-      return;
-    }
-
-    const availableSubjects = this.parseThemesSettings(themesConfig.value)
-      .flatMap((theme) => theme.subjects)
-      .map((subject) => subject.id);
-
-    if (availableSubjects.length === 0) {
-      console.warn(
-        "No subjects available in themes configuration. Cannot assign random subjects.",
-      );
-      return;
-    }
-
-    const usersToUpdate = await this.prisma.user.findMany({
-      where: {
-        role: Role.PARTICIPANT,
-        favoriteSubjectId: null,
-        teamId: null,
-      },
-      select: { id: true },
-    });
-
-    if (usersToUpdate.length === 0) {
-      console.log(
-        "No participants found without a favorite subject to update.",
-      );
-      return;
-    }
-
-    const updateOperations = usersToUpdate.map((user) => {
-      const randomIndex = Math.floor(Math.random() * availableSubjects.length);
-      const randomSubjectId = availableSubjects[randomIndex];
-
-      return this.prisma.user.update({
-        where: { id: user.id },
-        data: { favoriteSubjectId: randomSubjectId },
-      });
-    });
-
-    await this.prisma.$transaction(updateOperations);
+    return filePath;
   }
 
   async autogenerateTeams(supabaseUserId: string) {
     await this.validateUserRole(supabaseUserId, Role.ORGANIZER);
-    await this.saveTmpMatchmakingSettingsFile();
-    await this.assignRandomSubjectToUsersWithoutFavorite();
 
-    let numberOfTeamsCreated = 0;
+    // 1. Préparation globale
+    const configPath = await this.saveTmpMatchmakingSettingsFile();
 
-    const themes = await this.prisma.hackathonConfig.findUnique({
+    const themesConfig = await this.prisma.hackathonConfig.findUnique({
       where: { key: HackathonConfigKey.THEMES },
     });
-    const subjectsIds = this.parseThemesSettings(
-      themes ? themes.value : [],
-    ).flatMap((t) => t.subjects.map((s) => s.id));
-
-    const usersBySubject = await Promise.all(
-      subjectsIds.map(async (subjectId) => {
-        const users = await this.prisma.user.findMany({
-          where: {
-            role: Role.PARTICIPANT,
-            favoriteSubjectId: subjectId,
-            teamId: null,
-          },
-          select: { id: true, school: true },
-        });
-        return { subjectId, users };
-      }),
+    const themeSettings = this.parseThemesSettings(themesConfig?.value || []);
+    const subjectsIds = themeSettings.flatMap((t) =>
+      t.subjects.map((s) => s.id)
     );
 
-    for (const { subjectId, users } of usersBySubject) {
-      if (users.length === 0) continue;
+    // 2. Lancement PARALLÈLE des calculs pour chaque sujet
+    const matchmakingTasks = subjectsIds.map(async (subjectId) => {
+      const users = await this.prisma.user.findMany({
+        where: {
+          role: Role.PARTICIPANT,
+          favoriteSubjectId: subjectId,
+          teamId: null,
+        },
+        select: { id: true, school: true },
+      });
 
-      await this.saveTmpUsersFile(JSON.stringify(users));
+      if (users.length === 0) return null;
 
-      const themeSettings = this.parseThemesSettings(
-        themes ? themes.value : [],
+      // Fichier unique par sujet pour éviter les collisions
+      const userFileName = `users_${subjectId}.json`;
+      const userPath = await this.saveTmpUsersFile(
+        JSON.stringify(users),
+        userFileName
       );
 
+      // Exécution du script Python
+      const teams = await this.runMatchmakingScript(userPath, configPath);
+
+      return { subjectId, teams };
+    });
+
+    // On attend que TOUS les scripts Python terminent
+    const results = await Promise.all(matchmakingTasks);
+
+    // 3. Traitement des résultats et création en base de données
+    let numberOfTeamsCreated = 0;
+
+    for (const result of results) {
+      if (!result) continue;
+
+      const { subjectId, teams } = result;
       const themeId = this.getThemeId(themeSettings, subjectId);
       const subjectName = this.getSubjectName(themeSettings, subjectId);
 
-      const matchmakingTeams = await this.runMatchmakingScript();
-
-      numberOfTeamsCreated += matchmakingTeams.length;
-
-      for (let i = 0; i < matchmakingTeams.length; i++) {
-        const mmTeam = matchmakingTeams[i];
+      for (let i = 0; i < teams.length; i++) {
+        const mmTeam = teams[i];
         const teamName = `Team_${subjectName}_${i + 1}`;
 
         const createTeamDTO: CreateTeamDTO = {
@@ -224,18 +190,18 @@ export class TeamService {
         };
 
         await this.create(createTeamDTO, supabaseUserId);
+        numberOfTeamsCreated++;
       }
-
-      return { count: numberOfTeamsCreated };
     }
-  }
 
+    return { count: numberOfTeamsCreated };
+  }
   // ------------------ CRUD ------------------
 
   async create(newTeamData: CreateTeamDTO, supabaseUserId: string) {
     await this.validateThemeAndSubject(
       newTeamData.themeId,
-      newTeamData.subjectId,
+      newTeamData.subjectId
     );
 
     await Promise.all([
@@ -268,13 +234,13 @@ export class TeamService {
   async update(
     id: string,
     updateTeamData: UpdateTeamDTO,
-    supabaseUserId: string,
+    supabaseUserId: string
   ) {
     await this.checkTeamExists(id);
     if (updateTeamData.themeId && updateTeamData.subjectId) {
       await this.validateThemeAndSubject(
         updateTeamData.themeId,
-        updateTeamData.subjectId,
+        updateTeamData.subjectId
       );
     }
     await Promise.all([
@@ -319,7 +285,7 @@ export class TeamService {
   async updateIgnoreConstraints(
     id: string,
     ignoreConstraints: boolean,
-    supabaseUserId: string,
+    supabaseUserId: string
   ) {
     await this.validateUserAndTeam(id, supabaseUserId);
 
@@ -361,14 +327,14 @@ export class TeamService {
     teamId: string,
     userId: string,
     supabaseUserId: string,
-    isParticipant: boolean,
+    isParticipant: boolean
   ) {
     await this.validateUserAndTeam(teamId, supabaseUserId, isParticipant);
 
     const user = await this.validateUserExists(userId);
     if (user.teamId) {
       throw new ForbiddenException(
-        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`,
+        `User with id '${userId}' is already a member of team with id '${user.teamId}'.`
       );
     }
 
@@ -434,7 +400,7 @@ export class TeamService {
     teamId: string,
     userId: string,
     supabaseUserId: string,
-    isParticipant: boolean,
+    isParticipant: boolean
   ) {
     await this.validateUserAndTeam(teamId, supabaseUserId, isParticipant);
 
@@ -453,7 +419,7 @@ export class TeamService {
       case Role.PARTICIPANT:
         if (user.teamId !== teamId) {
           throw new ForbiddenException(
-            `User with id '${user.id}' is not a member of team with id '${teamId}'.`,
+            `User with id '${user.id}' is not a member of team with id '${teamId}'.`
           );
         }
         relationKey = "members";
@@ -469,7 +435,7 @@ export class TeamService {
 
       default:
         throw new ForbiddenException(
-          `Cannot withdraw user with role '${user.role}' from a team.`,
+          `Cannot withdraw user with role '${user.role}' from a team.`
         );
     }
 
@@ -531,7 +497,7 @@ export class TeamService {
   private async validateUserAndTeam(
     teamId: string,
     supabaseUserId: string,
-    isParticipant = false,
+    isParticipant = false
   ) {
     if (isParticipant) {
       this.validateUserRole(supabaseUserId, Role.PARTICIPANT);
@@ -561,7 +527,7 @@ export class TeamService {
     const subject = theme.subjects.find((s) => s.id === subjectId);
     if (!subject)
       throw new NotFoundException(
-        `Subject with id '${subjectId}' not found in theme '${themeId}'.`,
+        `Subject with id '${subjectId}' not found in theme '${themeId}'.`
       );
   }
 }
