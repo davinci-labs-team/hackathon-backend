@@ -7,11 +7,10 @@ import { SupabaseDecodedUser } from "src/common/decorators/supabase-decoded-user
 import { SupabaseUser } from "src/common/decorators/supabase-user.decorator";
 import { SubmissionDetailedResponseDto } from "./dto/submission-detailed-reponse.dto";
 import { CommentSubmissionDto } from "./dto/comment-submission.dto";
-import { Public } from "src/common/decorators/public.decorator";
 
 @Controller("submission")
 export class SubmissionController {
-  constructor(private readonly submissionService: SubmissionService) {}
+  constructor(private readonly submissionService: SubmissionService) { }
 
   @Post()
   async create(@Param("teamId") teamId: string): Promise<submissionReponseDto> {
@@ -19,7 +18,6 @@ export class SubmissionController {
   }
 
   @Post("createAll")
-  @Public()
   async createAll(): Promise<submissionReponseDto[]> {
     return this.submissionService.createAllSubmissions();
   }
@@ -29,16 +27,16 @@ export class SubmissionController {
     return this.submissionService.getAllSubmissions();
   }
 
+  @Get("due-date")
+  async getDueDate(): Promise<Date> {
+    return this.submissionService.getDueDate();
+  }
+
   @Get(":teamId")
   async find(
     @Param("teamId") teamId: string,
   ): Promise<SubmissionDetailedResponseDto> {
     return this.submissionService.getSubmissions(teamId);
-  }
-
-  @Get("due-date")
-  async getDueDate(): Promise<Date> {
-    return this.submissionService.getDueDate();
   }
 
   @Put()
