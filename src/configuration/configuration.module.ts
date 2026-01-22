@@ -7,4 +7,4 @@ import { ConfigurationController } from "./configuration.controller";
   controllers: [ConfigurationController],
   exports: [ConfigurationService],
 })
-export class ConfigurationModule { }
+export class ConfigurationModule {}

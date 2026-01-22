@@ -32,7 +32,7 @@ export class GithubService {
   constructor(
     private prismaService: PrismaService,
     private configurationService: ConfigurationService,
-  ) { }
+  ) {}
 
   async createPrivateRepo(supabaseUserId: string): Promise<GitHubRepoResponse> {
     const user = await this.prismaService.user.findUnique({
@@ -127,7 +127,7 @@ export class GithubService {
       Accept: "application/vnd.github+json",
     };
 
-    const orgName = hackathonName.trim().replace(/\s+/g, '-');
+    const orgName = hackathonName.trim().replace(/\s+/g, "-");
 
     // 4. Check if Organization exists
     // Note: Creating an organization via API is not generally supported for checking existence in this way without potential 404.
@@ -162,7 +162,6 @@ export class GithubService {
       },
     });
 
-
     // 5. Loop through teams and create repos / add members
     const results: any[] = [];
 
@@ -189,7 +188,7 @@ export class GithubService {
           repoUrl = `https://github.com/${orgName}/${repoName}`;
         } else {
           console.error(`Failed to create repo for team ${team.name}`, error);
-          results.push({ team: team.name, status: 'failed_repo_creation' });
+          results.push({ team: team.name, status: "failed_repo_creation" });
           continue;
         }
       }
@@ -206,7 +205,9 @@ export class GithubService {
       });
 
       // Add Members, juries, mentors
-      for (const member of team.members.concat(team.juries).concat(team.mentors)) {
+      for (const member of team.members
+        .concat(team.juries)
+        .concat(team.mentors)) {
         if (!member.github) continue;
 
         const memberGithubData: GitHubData =
@@ -216,25 +217,31 @@ export class GithubService {
 
         // We need the username (login). usually stored in profile or we have to fetch it if we stored the token.
         // Assuming we stored the profile info or at least the username in the json.
-        // If the 'github' field structure is not guaranteed to have 'login' or 'username', we might need to fetch 'user' from github using their token, 
+        // If the 'github' field structure is not guaranteed to have 'login' or 'username', we might need to fetch 'user' from github using their token,
         // OR rely on what's stored. The prompt didn't specify the `github` JSON structure fully but usually auth providers store profile.
         // Let's assume `login` or `username` exists.
 
-        const username = memberGithubData.login || memberGithubData.username || (memberGithubData as any).nickname;
+        const username =
+          memberGithubData.login ||
+          memberGithubData.username ||
+          (memberGithubData as any).nickname;
 
         if (username) {
           try {
             await axios.put(
               `https://api.github.com/repos/${orgName}/${repoName}/collaborators/${username}`,
-              { permission: 'push' },
-              { headers }
+              { permission: "push" },
+              { headers },
             );
           } catch (err) {
-            console.error(`Failed to add user ${username} to repo ${repoName}`, err);
+            console.error(
+              `Failed to add user ${username} to repo ${repoName}`,
+              err,
+            );
           }
         }
       }
-      results.push({ team: team.name, repo: repoUrl, status: 'success' });
+      results.push({ team: team.name, repo: repoUrl, status: "success" });
     }
 
     return results;

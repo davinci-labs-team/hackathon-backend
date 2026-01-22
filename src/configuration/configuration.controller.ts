@@ -59,6 +59,11 @@ export class ConfigurationController {
     return this.configurationService.completeCurrentPhase(supabaseUser.sub);
   }
 
+  @Post("/phases/reset")
+  async resetPhases(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
+    return this.configurationService.resetPhases(supabaseUser.sub);
+  }
+
   @Public()
   @Get("/:key/public")
   async findOnePublic(
