@@ -182,11 +182,23 @@ export class GithubService {
         );
         repoUrl = createRes.data.html_url;
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 422) {
-          // Repo likely already exists. Try to get it.
-          // We continue to add members.
-          repoUrl = `https://github.com/${orgName}/${repoName}`;
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 422) {
+            // Repo likely already exists. Try to get it.
+            // We continue to add members.
+            repoUrl = `https://github.com/${orgName}/${repoName}`;
+          } else if (error.response?.status === 403) {
+            // 🛑 CRITIQUE : L'utilisateur n'a pas les droits de créer un repo
+            throw new ForbiddenException(
+              `You do not have permission to create repositories in the organization '${orgName}'. Please ensure you are an organization owner or have repository creation privileges.`
+            );
+          } else {
+            console.error(`Failed to create repo for team ${team.name}`, error);
+            results.push({ team: team.name, status: "failed_repo_creation" });
+            continue;
+          }
         } else {
+          // Non-axios error
           console.error(`Failed to create repo for team ${team.name}`, error);
           results.push({ team: team.name, status: "failed_repo_creation" });
           continue;
