@@ -19,6 +19,7 @@ import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { VisibilityTypeRequest } from "./dto/visibility-type-request.dto";
 import { VisibilityType } from "./enums/visibility-type.enum";
 import { Public } from "src/common/decorators/public.decorator";
+import { Roles } from "src/common/decorators/roles.decorator";
 
 @ApiTags("announcements")
 @Controller("announcement")
@@ -29,18 +30,18 @@ export class AnnouncementController {
   ) {}
 
   @Post()
+  @Roles(Role.ORGANIZER)
   async create(
     @Body()
     createAnnouncementDto: CreateAnnouncementDto,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    // check if user exists and have ORGANIZER role
     const user = await this.prisma.user.findUnique({
       where: { supabaseUserId: supabaseUser.sub },
     });
 
-    if (!user || user.role !== Role.ORGANIZER) {
-      throw new Error("Only ORGANIZER users can create announcements");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     return this.announcementService.create(createAnnouncementDto, user);
@@ -65,36 +66,27 @@ export class AnnouncementController {
   }
 
   @Delete(":id")
+  @Roles(Role.ORGANIZER)
   async delete(
     @Param("id") id: string,
-    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<void> {
-    // check if user exists and have ORGANIZER role
-    const user = await this.prisma.user.findUnique({
-      where: { supabaseUserId: supabaseUser.sub },
-    });
-
-    if (!user || user.role !== Role.ORGANIZER) {
-      throw new Error("Only ORGANIZER users can delete announcements");
-    }
-
     return this.announcementService.delete(id);
   }
 
   @Patch(":id")
+  @Roles(Role.ORGANIZER)
   async update(
     @Param("id") id: string,
     @Body()
     updateAnnouncementDto: UpdateAnnouncementDto,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ) {
-    // check if user exists and have ORGANIZER role
     const user = await this.prisma.user.findUnique({
       where: { supabaseUserId: supabaseUser.sub },
     });
 
-    if (!user || user.role !== Role.ORGANIZER) {
-      throw new Error("Only ORGANIZER users can update announcements");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     return this.announcementService.update(id, updateAnnouncementDto, user);

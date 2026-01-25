@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 # Script to set up Python environment for matchmaking
 
 set -e

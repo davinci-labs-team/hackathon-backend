@@ -14,6 +14,7 @@ import { SubmissionModule } from "./submission/submission.module";
 import { TeamModule } from "./team/team.module";
 import { GithubModule } from "./github/github.module";
 import { MailerModule } from "./mailer/mailer.module";
+import { RolesGuard } from "./common/guards/roles.guard";
 
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 
@@ -42,6 +43,10 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
     {
       provide: APP_GUARD,
       useClass: SupabaseGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })
