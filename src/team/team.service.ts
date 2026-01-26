@@ -249,7 +249,7 @@ export class TeamService {
       this.validateUsersExist(updateTeamData.mentorIds || []),
     ]);
 
-    const team = await this.prisma.team.update({
+    const updatedTeam = await this.prisma.team.update({
       where: { id },
       data: {
         name: updateTeamData.name,
@@ -268,7 +268,7 @@ export class TeamService {
       },
     });
 
-    return { id: team.id };
+    return { id: updatedTeam.id };
   }
 
   async updateStatus(id: string, status: TeamStatus, supabaseUserId: string) {
@@ -488,7 +488,14 @@ export class TeamService {
   }
 
   private async checkTeamExists(teamId: string) {
-    const team = await this.prisma.team.findUnique({ where: { id: teamId } });
+    const team = await this.prisma.team.findUnique({ 
+      where: { id: teamId },
+      include: {
+        members: { select: { id: true } },
+        juries: { select: { id: true } },
+        mentors: { select: { id: true } },
+      }
+    });
     if (!team)
       throw new NotFoundException(`Team with id '${teamId}' not found.`);
     return team;

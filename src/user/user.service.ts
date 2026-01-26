@@ -317,20 +317,26 @@ export class UserService {
     }
 
     if (
+      updateUserDto.profilePicturePath !== undefined &&
       user.profilePicturePath &&
       updateUserDto.profilePicturePath !== user.profilePicturePath
     ) {
       await this.S3BucketService.deleteFile("users", user.profilePicturePath);
     }
 
+    const dataToUpdate: any = {
+      ...updateUserDto,
+      github: updateUserDto.github ?? undefined,
+      discord: updateUserDto.discord ?? undefined,
+    };
+
+    if (updateUserDto.profilePicturePath !== undefined) {
+      dataToUpdate.profilePicturePath = updateUserDto.profilePicturePath;
+    }
+
     return await this.prisma.user.update({
       where: { id },
-      data: {
-        ...updateUserDto,
-        profilePicturePath: updateUserDto.profilePicturePath ?? null,
-        github: updateUserDto.github ?? undefined,
-        discord: updateUserDto.discord ?? undefined,
-      },
+      data: dataToUpdate,
     });
   }
 
