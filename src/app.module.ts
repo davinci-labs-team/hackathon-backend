@@ -5,7 +5,6 @@ import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { APP_GUARD } from "@nestjs/core";
 import { S3BucketModule } from "./s3-bucket/s3-bucket.module";
-import { ExternalModuleController } from "./external-module/external-module.controller";
 import { AnnouncementModule } from "./announcement/announcement.module";
 import { FaqModule } from "./faq/faq.module";
 import { ConfigurationModule } from "./configuration/configuration.module";
@@ -38,7 +37,7 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
     GithubModule,
     MailerModule,
   ],
-  controllers: [ExternalModuleController],
+  controllers: [],
   providers: [
     {
       provide: APP_GUARD,

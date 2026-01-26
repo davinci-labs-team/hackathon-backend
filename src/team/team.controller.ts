@@ -17,6 +17,8 @@ import { SupabaseUser } from "../common/decorators/supabase-user.decorator";
 import { SupabaseDecodedUser } from "../common/decorators/supabase-decoded-user.types";
 import { TeamStatus } from "@prisma/client";
 import { UpdateTeamDTO } from "./dto/update-team.dto";
+import { Roles } from "src/common/decorators/roles.decorator";
+import { Role } from "@prisma/client";
 
 @Controller("team")
 export class TeamController {
@@ -57,6 +59,7 @@ export class TeamController {
   }
 
   @Post("autogenerate")
+  @Roles(Role.ORGANIZER)
   async autogenerateTeams(@SupabaseUser() supabaseUser: SupabaseDecodedUser) {
     return this.handleRequest(() =>
       this.teamService.autogenerateTeams(supabaseUser.sub),
@@ -64,6 +67,7 @@ export class TeamController {
   }
 
   @Put(":id")
+  @Roles(Role.ORGANIZER)
   async update(
     @Param("id") id: string,
     @Body() updateTeamData: UpdateTeamDTO,
@@ -86,6 +90,7 @@ export class TeamController {
   }
 
   @Patch(":id/ignore-constraints")
+  @Roles(Role.ORGANIZER)
   async updateIgnoreConstraints(
     @Param("id") id: string,
     @Body("ignoreConstraints") ignoreConstraints: boolean,
@@ -118,6 +123,7 @@ export class TeamController {
   }
 
   @Post(":teamId/users/:userId")
+  @Roles(Role.ORGANIZER)
   async assignUserToTeam(
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
@@ -136,6 +142,7 @@ export class TeamController {
   }
 
   @Delete(":teamId/users/:userId")
+  @Roles(Role.ORGANIZER)
   async withdrawUserFromTeam(
     @Param("teamId") teamId: string,
     @Param("userId") userId: string,
@@ -164,6 +171,7 @@ export class TeamController {
   }
 
   @Delete(":id")
+  @Roles(Role.ORGANIZER)
   async remove(
     @Param("id") id: string,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,

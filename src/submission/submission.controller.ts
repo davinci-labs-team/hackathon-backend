@@ -7,17 +7,21 @@ import { SupabaseDecodedUser } from "src/common/decorators/supabase-decoded-user
 import { SupabaseUser } from "src/common/decorators/supabase-user.decorator";
 import { SubmissionDetailedResponseDto } from "./dto/submission-detailed-reponse.dto";
 import { CommentSubmissionDto } from "./dto/comment-submission.dto";
+import { Roles } from "src/common/decorators/roles.decorator";
+import { Role } from "@prisma/client";
 
 @Controller("submission")
 export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) { }
 
   @Post()
+  @Roles(Role.ORGANIZER)
   async create(@Param("teamId") teamId: string): Promise<submissionReponseDto> {
     return this.submissionService.createSubmission(teamId);
   }
 
   @Post("createAll")
+  @Roles(Role.ORGANIZER)
   async createAll(): Promise<submissionReponseDto[]> {
     return this.submissionService.createAllSubmissions();
   }
@@ -40,6 +44,7 @@ export class SubmissionController {
   }
 
   @Put()
+  @Roles(Role.ORGANIZER)
   async update(
     @Body() submission: UpdateSubmissionDto,
   ): Promise<submissionReponseDto> {
@@ -47,6 +52,7 @@ export class SubmissionController {
   }
 
   @Post("evaluate")
+  @Roles(Role.JURY)
   async evaluate(
     @Body() evaluation: EvaluateSubmissionDto,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
@@ -58,6 +64,7 @@ export class SubmissionController {
   }
 
   @Post("comment")
+  @Roles(Role.MENTOR)
   async comment(
     @Body() comment: CommentSubmissionDto,
     @SupabaseUser() supabaseUser: SupabaseDecodedUser,
