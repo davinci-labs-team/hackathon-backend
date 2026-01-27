@@ -179,11 +179,11 @@ export class TeamService {
 
       for (let i = 0; i < teams.length; i++) {
         const mmTeam = teams[i];
-        const teamName = `Team_${subjectName}_${i + 1}`;
+        const teamName = `${subjectName}_${i + 1}`;
 
         const createTeamDTO: CreateTeamDTO = {
           name: teamName,
-          description: `Auto-generated team for subject ${subjectId}`,
+          description: `Auto-generated team for subject ${subjectName}`,
           subjectId: subjectId,
           themeId: themeId,
           memberIds: mmTeam.members.map((m) => m.user_id),
