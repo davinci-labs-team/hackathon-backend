@@ -54,7 +54,6 @@ model Faq {
   id        String   @id @default(uuid())
   question  String
   answer    String
-  isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
