@@ -13,10 +13,4 @@ export class CreateFaqDto {
       "NestJS is a progressive Node.js framework for building efficient and scalable server-side applications.",
   })
   answer: string;
-
-  @ApiProperty({
-    description: "Indicates if the FAQ item is private",
-    example: false,
-  })
-  isPrivate: boolean;
 }
