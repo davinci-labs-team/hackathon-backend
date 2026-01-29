@@ -24,7 +24,6 @@ export class FaqService {
       data: {
         question: createFaqDto.question,
         answer: createFaqDto.answer,
-        isPrivate: createFaqDto.isPrivate,
       },
     });
   }
@@ -65,7 +64,6 @@ export class FaqService {
       data: {
         question: updateFaqDto.question,
         answer: updateFaqDto.answer,
-        isPrivate: updateFaqDto.isPrivate,
       },
     });
   }

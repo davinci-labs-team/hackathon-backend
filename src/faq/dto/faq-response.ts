@@ -22,13 +22,6 @@ export class FaqResponse {
   answer: string;
 
   @ApiProperty({
-    description: "If the FAQ is private or public",
-    example: false,
-    type: Boolean,
-  })
-  isPrivate: boolean;
-
-  @ApiProperty({
     description: "Date when the FAQ entry was created",
     example: "2023-10-01T12:00:00Z",
     type: String,
