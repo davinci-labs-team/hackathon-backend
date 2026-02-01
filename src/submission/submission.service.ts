@@ -132,7 +132,21 @@ export class SubmissionService {
     return new Date(codingPhase.endDate);
   }
 
-  async updateSubmission(submission: UpdateSubmissionDto) {
+  async updateSubmission(submission: UpdateSubmissionDto, supabaseUserId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseUserId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(
+        `User with supabaseUserId ${supabaseUserId} not found`,
+      );
+    }
+
+    if (user.teamId !== submission.teamId) {
+      throw new PreconditionFailedException("You are not in this team");
+    }
+
     const dueDate = await this.getDueDate();
     if (new Date() > dueDate) {
       throw new PreconditionFailedException("Submission update is not allowed after the due date");

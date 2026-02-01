@@ -44,11 +44,11 @@ export class SubmissionController {
   }
 
   @Put()
-  @Roles(Role.ORGANIZER)
   async update(
     @Body() submission: UpdateSubmissionDto,
+    @SupabaseUser() supabaseUser: SupabaseDecodedUser,
   ): Promise<submissionReponseDto> {
-    return this.submissionService.updateSubmission(submission);
+    return this.submissionService.updateSubmission(submission, supabaseUser.sub);
   }
 
   @Post("evaluate")
